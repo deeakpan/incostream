@@ -6,9 +6,12 @@ import {
 import { hexToBytes } from "viem";
 import { getReencryptor } from "@inco-fhevm/js/reencryption";
 import { incoLiteEnvQuerier, incoLiteReencrypt } from "@inco-fhevm/js/lite";
-import { Schema, Bytes32 } from "@inco-fhevm/js";
+import { Schema, Binary } from "@inco-fhevm/js";
+import { getAddress, formatUnits } from "viem";
 
 export const SELECTED_NETWORK = "baseSepolia";
+export const KMS_CONNECT_ENDPOINT =
+  "https://grpc.basesepolia.covalidator.denver.inco.org";
 
 export const encryptValue = async ({
   value,
@@ -45,7 +48,7 @@ export const encryptValue = async ({
   });
 
   const inputCt = await encryptor(plaintextWithContext);
-
+  console.log("inputCt", inputCt);
   return { inputCt };
 };
 
@@ -56,26 +59,26 @@ export const reEncryptValue = async ({
   handle,
   publicClient,
   incoLiteAddress,
-  kmsConnectEndpoint,
 }) => {
   if (
     !chainId ||
     !contractAddress ||
     !walletClient ||
     !publicClient ||
-    !incoLiteAddress ||
-    !kmsConnectEndpoint
+    !incoLiteAddress
   ) {
     throw new Error("Missing required parameters for creating reencryptor");
   }
 
   try {
+    const checksummedAddress = getAddress(contractAddress);
+
     const reencryptor = await getReencryptor({
-      chainId,
-      contractAddress,
-      walletClient,
+      chainId: chainId,
+      contractAddress: checksummedAddress,
+      walletClient: walletClient.data,
       reencryptEndpoint: incoLiteReencrypt({
-        kmsConnectRpcEndpointOrClient: kmsConnectEndpoint,
+        kmsConnectRpcEndpointOrClient: KMS_CONNECT_ENDPOINT,
       }),
       fheEnvQuerier: incoLiteEnvQuerier({
         incoLiteAddress,
@@ -83,14 +86,19 @@ export const reEncryptValue = async ({
       }),
     });
 
-    const decrypted = await reencryptor({
+    const rawDecrypted = await reencryptor({
       handle: {
-        value: Schema.parse(Bytes32, handle),
+        value: Schema.parse(Binary.Bytes32, handle),
         type: 8, // Default to uint256 type
       },
     });
 
-    return decrypted;
+    console.log("rawDecrypted", rawDecrypted);
+
+    const decryptedEther = formatUnits(BigInt(rawDecrypted.value), 18); // JUST FOR FORMATTING
+    const formattedValue = parseFloat(decryptedEther).toFixed(0);
+
+    return formattedValue;
   } catch (error) {
     throw new Error(`Failed to create reencryptor: ${error.message}`);
   }
