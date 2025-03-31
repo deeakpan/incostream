@@ -5,7 +5,8 @@ import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { useDisconnect } from "wagmi";
 import { useEffect, useState } from "react";
 import { Wallet, LogOut, User } from "lucide-react";
-import EncryptedTokenInterface from "@/components/EncryptedTokenInterface";
+import EncryptedTokenInterface from "@/components/encrypted-token-ineterface";
+import EncryptedSend from "@/components/encrypted-send";
 
 export default function Home() {
   const { isConnected, address } = useAccount();
@@ -85,7 +86,10 @@ export default function Home() {
         </div>
 
         {isConnected ? (
-          <EncryptedTokenInterface />
+          <div className="grid md:grid-cols-2 place-items-start gap-6 mt-32">
+            <EncryptedTokenInterface />
+            <EncryptedSend />
+          </div>
         ) : (
           <div className="bg-gray-800 border border-gray-700 rounded-xl p-10 text-center shadow-2xl">
             <Wallet className="mx-auto mb-4 w-12 h-12 text-blue-400" />
