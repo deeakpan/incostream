@@ -65,6 +65,7 @@ export const ChainBalanceProvider = ({ children }) => {
         ]);
 
         if (
+          // indicates balance is not generated yet
           balanceHandle.toString() ===
           "0x0000000000000000000000000000000000000000000000000000000000000000"
         ) {
@@ -72,6 +73,7 @@ export const ChainBalanceProvider = ({ children }) => {
           return;
         }
 
+        // Get the config as per selected chain
         const cfg = getActiveIncoLiteDeployment(chainId);
         let decrypted;
 
