@@ -63,7 +63,7 @@ export const reEncryptValue = async ({
   if (
     !chainId ||
     !contractAddress ||
-    !walletClient ||
+  !walletClient ||
     !publicClient ||
     !incoLiteAddress
   ) {
