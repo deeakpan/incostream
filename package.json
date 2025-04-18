@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@inco-fhevm/js": "^0.1.7",
+    "@inco-fhevm/js": "^0.1.8-experimental",
     "@tanstack/react-query": "^5.67.2",
     "@web3modal/ethereum": "^2.7.1",
     "@web3modal/wagmi": "^5.1.11",

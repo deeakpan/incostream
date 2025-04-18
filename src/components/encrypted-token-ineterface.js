@@ -154,9 +154,9 @@ const EncryptedTokenInterface = () => {
             </div>
           </div>
         </div>
-        <p className="font-mono text-sm text-gray-400 mt-4">
+        {/* <p className="font-mono text-sm text-gray-400 mt-4">
           Only owner of contract can mint the token.
-        </p>
+        </p> */}
       </div>
     </div>
   );
