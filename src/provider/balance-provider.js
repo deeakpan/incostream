@@ -20,7 +20,7 @@ import {
 } from "@/utils/contract";
 
 import { reEncryptValue } from "@/utils/inco-lite";
-import { getActiveIncoLiteDeployment } from "@inco-fhevm/js/lite";
+import { getActiveIncoLiteDeployment } from "@inco/js/lite";
 
 const ChainBalanceContext = createContext();
 

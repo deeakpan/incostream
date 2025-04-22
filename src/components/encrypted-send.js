@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { useAccount, usePublicClient, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useWriteContract,
+} from "wagmi";
 import {
   CreditCard,
   RefreshCw,
@@ -9,7 +14,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { SELECTED_NETWORK, encryptValue } from "@/utils/inco-lite";
-import { getActiveIncoLiteDeployment } from "@inco-fhevm/js/lite";
+import { getActiveIncoLiteDeployment } from "@inco/js/lite";
 import { parseEther, writeContractAsync, publicClient } from "viem";
 import { ENCRYPTED_ERC20_CONTRACT_ADDRESS } from "@/utils/contract";
 
@@ -22,6 +27,7 @@ const EncryptedSend = () => {
 
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
+  const chainId = useChainId();
 
   const send = async () => {
     if (!amount || Number(amount) <= 0) {
@@ -40,7 +46,7 @@ const EncryptedSend = () => {
     try {
       let parsedAmount = parseEther(amount);
       // config
-      const config = getActiveIncoLiteDeployment(SELECTED_NETWORK);
+      const config = getActiveIncoLiteDeployment(chainId);
 
       // Encrypt the value
       const { inputCt } = await encryptValue({
