@@ -87,12 +87,8 @@ export const ChainBalanceProvider = ({ children }) => {
          */
 
         decrypted = await reEncryptValue({
-          cfg,
           chainId: cfg.chainId,
-          contractAddress: ENCRYPTED_ERC20_CONTRACT_ADDRESS,
-          incoLiteAddress: cfg.deployedAtAddress,
           walletClient: walletClient,
-          publicClient,
           handle: balanceHandle,
         });
 
