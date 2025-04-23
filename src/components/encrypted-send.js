@@ -5,17 +5,9 @@ import {
   usePublicClient,
   useWriteContract,
 } from "wagmi";
-import {
-  CreditCard,
-  RefreshCw,
-  Lock,
-  Unlock,
-  Send,
-  ArrowRight,
-} from "lucide-react";
-import { SELECTED_NETWORK, encryptValue } from "@/utils/inco-lite";
-import { getActiveIncoLiteDeployment } from "@inco/js/lite";
-import { parseEther, writeContractAsync, publicClient } from "viem";
+import { Send, ArrowRight } from "lucide-react";
+import { getConfig, encryptValue } from "@/utils/inco-lite";
+import { parseEther } from "viem";
 import { ENCRYPTED_ERC20_CONTRACT_ADDRESS } from "@/utils/contract";
 
 const EncryptedSend = () => {
@@ -46,7 +38,7 @@ const EncryptedSend = () => {
     try {
       let parsedAmount = parseEther(amount);
       // config
-      const config = getActiveIncoLiteDeployment(chainId);
+      const config = getConfig(chainId);
 
       // Encrypt the value
       const { inputCt } = await encryptValue({

@@ -6,7 +6,7 @@ import {
 } from "@inco/js/lite";
 import { hexToBytes } from "viem";
 import { getAddress, formatUnits } from "viem";
-import { getActiveIncoLiteDeployment } from "@inco/js/lite";
+import { getActiveLightningDeployment } from "@inco/js/lite";
 
 /**
  * @dev Network configuration constants for Inco FHE operations
@@ -26,7 +26,7 @@ export const NETWORK_ID = "baseSepolia";
  * Currently only operating on Base Sepolia
  */
 export const KMS_SERVICE_ENDPOINT =
-  "https://grpc.base-sepolia.denver.testnet.inco.org";
+  "https://grpc.base-sepolia.lightning.testnet.inco.org/";
 
 /**
  * @dev Encryption scheme constants
@@ -57,7 +57,7 @@ const ENCRYPTION_SCHEME_ECIES = 1;
 const DATA_TYPE_UINT256 = 8;
 
 export const getConfig = (chainId) => {
-  return getActiveIncoLiteDeployment(chainId);
+  return getActiveLightningDeployment(chainId);
 };
 
 /**

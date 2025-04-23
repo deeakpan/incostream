@@ -19,8 +19,7 @@ import {
   ENCRYPTEDERC20ABI,
 } from "@/utils/contract";
 
-import { reEncryptValue } from "@/utils/inco-lite";
-import { getActiveIncoLiteDeployment } from "@inco/js/lite";
+import { getConfig, reEncryptValue } from "@/utils/inco-lite";
 
 const ChainBalanceContext = createContext();
 
@@ -74,11 +73,10 @@ export const ChainBalanceProvider = ({ children }) => {
         }
 
         // Get the config as per selected chain
-        const cfg = getActiveIncoLiteDeployment(chainId);
-        let decrypted;
+        const cfg = getConfig(chainId);
 
-        console.log(publicClient);
-        console.log(walletClient);
+        console.log(cfg)
+        let decrypted;
 
         /**
          * @dev
