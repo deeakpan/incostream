@@ -19,7 +19,7 @@ export const encryptValue = async ({ value, address, contractAddress }) => {
 
   // Format the contract address to checksum format for standardization
   const checksummedAddress = getAddress(contractAddress);
-  await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for the transfer to be processed
+  
   const incoConfig = await getConfig();
 
   await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for the transfer to be processed
