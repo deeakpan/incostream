@@ -17,9 +17,9 @@ import { getContract } from "viem";
 import {
   ENCRYPTED_ERC20_CONTRACT_ADDRESS,
   ENCRYPTEDERC20ABI,
-} from "@/utils/contract";
+} from "../utils/contract";
 
-import { getConfig, reEncryptValue } from "@/utils/inco-lite";
+import { getConfig, reEncryptValue } from "../utils/inco-lite";
 
 const ChainBalanceContext = createContext();
 

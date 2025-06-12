@@ -1,8 +1,41 @@
-import { getAddress, formatUnits } from "viem";
-import { Lightning } from "@inco/js/lite";
+import { getViemChain, supportedChains } from '@inco/js';
+import { Lightning } from '@inco/js/lite';
+import { createWalletClient, custom } from 'viem';
 
 export const getConfig = () => {
-  return Lightning.latest("testnet", 84532);
+  return Lightning.latest('testnet', supportedChains.baseSepolia);
+};
+
+export const setupWallet = async () => {
+  if (!window.ethereum) {
+    throw new Error('Please install MetaMask');
+  }
+
+  const accounts = await window.ethereum.request({ 
+    method: 'eth_requestAccounts' 
+  });
+
+  if (accounts.length === 0) {
+    throw new Error('No accounts found');
+  }
+
+  const walletClient = createWalletClient({
+    chain: getViemChain(supportedChains.baseSepolia),
+    account: accounts[0],
+    transport: custom(window.ethereum)
+  });
+
+  return {
+    account: accounts[0],
+    chain: getViemChain(supportedChains.baseSepolia),
+    transport: custom(window.ethereum),
+    signMessage: async (message) => {
+      return window.ethereum.request({
+        method: 'personal_sign',
+        params: [message, accounts[0]]
+      });
+    }
+  };
 };
 
 /**
@@ -14,22 +47,15 @@ export const getConfig = () => {
  * });
  */
 export const encryptValue = async ({ value, address, contractAddress }) => {
-  // Convert the input value to BigInt for proper encryption
-  const valueBigInt = BigInt(value);
-
-  // Format the contract address to checksum format for standardization
-  const checksummedAddress = getAddress(contractAddress);
-
-  const incoConfig = await getConfig();
-
-  const encryptedData = await incoConfig.encrypt(valueBigInt, {
+  const zap = getConfig();
+  
+  const ciphertext = await zap.encrypt(value, {
     accountAddress: address,
-    dappAddress: checksummedAddress,
+    dappAddress: contractAddress
   });
 
-  console.log("Encrypted data:", encryptedData);
-
-  return encryptedData;
+  console.log("Encrypted data:", ciphertext);
+  return ciphertext;
 };
 
 /**
@@ -40,27 +66,19 @@ export const encryptValue = async ({ value, address, contractAddress }) => {
  * });
  */
 export const reEncryptValue = async ({ walletClient, handle }) => {
-  // Validate that all required parameters are provided
   if (!walletClient || !handle) {
     throw new Error("Missing required parameters for creating reencryptor");
   }
 
   try {
-    const incoConfig = await getConfig();
-    const reencryptor = await incoConfig.getReencryptor(walletClient.data);
-
-    const decryptedResult = await reencryptor({
-      handle: handle.toString(),
-    });
-
-    console.log("Decrypted result:", decryptedResult);
-
-    // Optional formatting of the decrypted value
-    const decryptedEther = formatUnits(BigInt(decryptedResult.value), 18);
-    const formattedValue = parseFloat(decryptedEther).toFixed(0);
-
-    return formattedValue;
+    const zap = getConfig();
+    const reencryptor = await zap.getReencryptor(walletClient);
+    const result = await reencryptor({ handle: handle.toString() });
+    
+    console.log("Decrypted result:", result);
+    return result.value.toString();
   } catch (error) {
+    console.error("Reencryption error:", error);
     throw new Error(`Failed to create reencryptor: ${error.message}`);
   }
 };

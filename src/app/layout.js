@@ -1,7 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { Web3Provider } from "@/provider/web3-provider";
-import { ChainBalanceProvider } from "@/provider/balance-provider";
+import { Web3Provider } from "../provider/web3-provider";
+import { ChainBalanceProvider } from "../provider/balance-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
