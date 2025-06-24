@@ -6,102 +6,40 @@ import { useEffect, useState } from "react";
 import EncryptedTokenDashboard from "@/components/encrypted-token-dashboard";
 import Image from "next/image";
 import { ConfirmModal } from "@/components/encrypted-token-dashboard";
+import Link from "next/link";
 
 export default function MintPage() {
-  const { isConnected, address } = useAccount();
-  const { open } = useWeb3Modal();
-  const { disconnectAsync } = useDisconnect();
-  const [mounted, setMounted] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleDisconnect = async () => {
-    try {
-      await disconnectAsync();
-      setMobileMenuOpen(false);
-    } catch (error) {
-      console.error("Disconnect error:", error);
-    }
-  };
-
-  const handleConnect = () => {
-    try {
-      open();
-      setMobileMenuOpen(false);
-    } catch (error) {
-      console.error("Connect error:", error);
-    }
-  };
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-inco-navy flex items-center justify-center">
-        <div className="text-white/60">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-inco-navy text-white">
-      <div className="max-w-7xl mx-auto px-2 py-6">
-        {/* Desktop Header */}
-        <header className="hidden sm:flex items-center justify-between mb-16">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
-              <CloudIcon className="w-6 h-6 text-inco-blue" />
-              Incostream
-            </span>
+    <div className="min-h-screen bg-inco-navy text-white flex flex-col px-4">
+      <div className="w-full flex items-center justify-start pt-8 pl-8">
+        <span className="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-inco-blue">
+          <CloudIcon className="w-7 h-7 text-inco-blue" />
+          Incostream
+        </span>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="max-w-md w-full mx-auto flex flex-col gap-8 items-center py-24">
+          <p className="mb-4 text-base max-w-sm w-full text-center font-medium">
+            Unlock the full power of <span className="text-inco-blue font-extrabold">Incostream</span> on Base Sepolia, built with Inco: mint an NFT (ERC-721) to launch your own auction, or mint cUSDC to join exclusive, private bidding.
+          </p>
+          <div className="flex flex-col gap-6 w-full bg-white/5 border border-white/10 rounded-2xl shadow-lg p-8 text-left">
+            <Link href="/mint/nft" className="block w-full">
+              <div className="w-full hover:bg-inco-navy/60 rounded-xl transition-colors p-6 text-left text-lg font-semibold cursor-pointer border border-transparent hover:border-inco-blue">
+                NFT (ERC-721)
+                <div className="text-white/50 text-sm font-normal mt-2">Mint an NFT to create a new auction on the platform.</div>
+              </div>
+            </Link>
+            <Link href="/mint/cusdc" className="block w-full">
+              <div className="w-full hover:bg-inco-navy/60 rounded-xl transition-colors p-6 text-left text-lg font-semibold cursor-pointer border border-transparent hover:border-inco-blue">
+                cUSDC
+                <div className="text-white/60 text-sm font-normal mt-2">Get cUSDC to access confidential, private bidding on Incostream auctions—your gateway to secure, exclusive deals.</div>
+              </div>
+            </Link>
           </div>
-
-          {isConnected ? (
-            <>
-              <button
-                onClick={() => setShowConfirm(true)}
-                className="flex items-center justify-center h-9 px-3 bg-red-500/80 text-white border border-red-500/40 rounded-full shadow hover:bg-red-600/90 transition-colors text-xs font-mono"
-                title="Disconnect"
-              >
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </button>
-              <ConfirmModal
-                open={showConfirm}
-                onConfirm={async () => { setShowConfirm(false); await handleDisconnect(); }}
-                onCancel={() => setShowConfirm(false)}
-                address={address ?? ""}
-              />
-            </>
-          ) : (
-            <button
-              onClick={handleConnect}
-              className="px-6 py-2.5 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded-full text-sm font-semibold"
-            >
-              Connect Wallet
-            </button>
-          )}
-        </header>
-
-        {/* Mobile Header */}
-        <header className="sm:hidden mb-16">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
-              <CloudIcon className="w-6 h-6 text-inco-blue" />
-              Incostream
-            </span>
-            <button
-              onClick={isConnected ? () => setShowConfirm(true) : handleConnect}
-              className={`px-4 py-2 ${isConnected ? 'bg-red-500/80 text-white border border-red-500/40 shadow hover:bg-red-600/90' : 'bg-inco-blue text-white hover:bg-inco-blue/90'} transition-colors rounded-full text-xs font-semibold`}
-              title={isConnected ? 'Disconnect' : 'Connect'}
-            >
-              {isConnected ? 'Connected' : 'Connect'}
-            </button>
-          </div>
-        </header>
-
-        {/* Only show dashboard, always, but pass isConnected */}
-        <EncryptedTokenDashboard isConnected={isConnected} />
+        </div>
+        <div className="w-full flex justify-center mt-6">
+          <span className="text-xs text-white/40 tracking-wide">Powered by <span className="text-inco-blue font-bold">IncoNetwork</span></span>
+        </div>
       </div>
     </div>
   );
