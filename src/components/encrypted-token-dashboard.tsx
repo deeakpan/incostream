@@ -7,7 +7,11 @@ import EncryptedTokenInterface from "./encrypted-token-interface";
 import EncryptedSend from "./encrypted-send";
 import ReactDOM from "react-dom";
 
-const EncryptedTokenDashboard = () => {
+interface EncryptedTokenDashboardProps {
+  isConnected: boolean;
+}
+
+const EncryptedTokenDashboard = ({ isConnected }: EncryptedTokenDashboardProps) => {
   const [encryptedBalance, setEncryptedBalance] = useState(0);
   const [isEncryptedLoading, setIsEncryptedLoading] = useState(false);
   const [error, setError] = useState("");
@@ -76,8 +80,9 @@ const EncryptedTokenDashboard = () => {
         isEncryptedLoading={isEncryptedLoading}
         error={error}
         refreshBalance={refreshBalance}
+        isConnected={isConnected}
       />
-      <EncryptedSend refreshBalance={refreshBalance} />
+      <EncryptedSend refreshBalance={refreshBalance} isConnected={isConnected} />
     </div>
   );
 };

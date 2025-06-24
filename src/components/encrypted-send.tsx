@@ -6,9 +6,10 @@ import { ENCRYPTED_ERC20_CONTRACT_ADDRESS } from "@/utils/contract";
 
 interface EncryptedSendProps {
   refreshBalance: () => Promise<void>;
+  isConnected: boolean;
 }
 
-const EncryptedSend = ({ refreshBalance }: EncryptedSendProps) => {
+const EncryptedSend = ({ refreshBalance, isConnected }: EncryptedSendProps) => {
   const { address } = useAccount();
   const [amount, setAmount] = useState("");
   const [receiverAddress, setReceiverAddress] = useState("");
@@ -105,7 +106,7 @@ const EncryptedSend = ({ refreshBalance }: EncryptedSendProps) => {
           value={receiverAddress}
           onChange={(e) => setReceiverAddress(e.target.value)}
           className="w-full p-3 bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors"
-          disabled={isLoading}
+          disabled={isLoading || !isConnected}
         />
 
         <input
@@ -114,7 +115,7 @@ const EncryptedSend = ({ refreshBalance }: EncryptedSendProps) => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="w-full p-3 bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors"
-          disabled={isLoading}
+          disabled={isLoading || !isConnected}
         />
       </div>
 
@@ -132,9 +133,7 @@ const EncryptedSend = ({ refreshBalance }: EncryptedSendProps) => {
       <button
         onClick={send}
         className="w-full p-3 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
-        disabled={
-          !amount || Number(amount) <= 0 || !receiverAddress || isLoading
-        }
+        disabled={!amount || Number(amount) <= 0 || !receiverAddress || isLoading || !isConnected}
       >
         {isLoading ? (
           <div className="flex items-center justify-center">

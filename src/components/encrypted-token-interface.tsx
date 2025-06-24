@@ -8,6 +8,7 @@ interface EncryptedTokenInterfaceProps {
   isEncryptedLoading: boolean;
   error: string;
   refreshBalance: () => Promise<void>;
+  isConnected: boolean;
 }
 
 const EncryptedTokenInterface = ({
@@ -15,6 +16,7 @@ const EncryptedTokenInterface = ({
   isEncryptedLoading,
   error,
   refreshBalance,
+  isConnected,
 }: EncryptedTokenInterfaceProps) => {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +92,7 @@ const EncryptedTokenInterface = ({
         <button
           onClick={refreshBalance}
           className="flex items-center gap-2 hover:bg-white/10 transition-colors text-sm px-2 py-1"
-          disabled={isEncryptedLoading}
+          disabled={isEncryptedLoading || !isConnected}
         >
           <span className="text-white/60">Refresh</span>
           <svg
@@ -136,7 +138,7 @@ const EncryptedTokenInterface = ({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="w-full p-3 bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors"
-          disabled={isLoading}
+          disabled={isLoading || !isConnected}
         />
       </div>
 
@@ -154,7 +156,7 @@ const EncryptedTokenInterface = ({
       <button
         onClick={handleMint}
         className="w-full p-3 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
-        disabled={!amount || Number(amount) <= 0 || isLoading}
+        disabled={!amount || Number(amount) <= 0 || isLoading || !isConnected}
       >
         {isLoading ? (
           <div className="flex items-center justify-center">

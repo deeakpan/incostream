@@ -52,7 +52,6 @@ export default function MintPage() {
         <header className="hidden sm:flex items-center justify-between mb-16">
           <div className="flex items-center gap-2">
             <IncoMainLogo />
-            <h1 className="text-2xl font-medium font-mono">Inco Template</h1>
           </div>
 
           {isConnected ? (
@@ -86,80 +85,20 @@ export default function MintPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <IncoMainLogo />
-              <h1 className="text-xl font-medium font-mono">Inco Template</h1>
             </div>
 
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 hover:bg-white/10 transition-colors"
+              disabled
+              className="p-2 bg-gray-700 text-white/40 rounded cursor-not-allowed opacity-60"
               aria-label="Toggle menu"
             >
               <HamburgerIcon isOpen={mobileMenuOpen} />
             </button>
           </div>
-
-          {/* Mobile Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-lg p-4">
-              {isConnected ? (
-                <div className="space-y-3">
-                  <div className="text-sm font-mono text-white/80 pb-2 border-b border-white/10">
-                    Connected Wallet
-                  </div>
-                  <div className="text-xs font-mono break-all text-white/60">
-                    {address}
-                  </div>
-                  <button
-                    onClick={handleDisconnect}
-                    className="w-full px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-sm transition-colors rounded"
-                  >
-                    Disconnect Wallet
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-sm font-mono text-white/80 pb-2 border-b border-white/10">
-                    Wallet Connection
-                  </div>
-                  <button
-                    onClick={handleConnect}
-                    className="w-full px-4 py-2.5 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded"
-                  >
-                    Connect Wallet
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </header>
 
-        {isConnected ? (
-          <EncryptedTokenDashboard />
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24">
-            <div className="text-center max-w-md px-4 sm:px-0">
-              <div className="flex w-full justify-center mb-6">
-                <Image
-                  src="https://cdn.prod.website-files.com/671156d33ac264346e223043/675a2a83d4ac40cf1352048c_logo%20(24).png"
-                  alt="Wallet"
-                  width={160}
-                  height={160}
-                />
-              </div>
-
-              <h2 className="text-xl sm:text-2xl mb-3">Connect Your Wallet</h2>
-              <p className="text-white/60 mb-8 leading-relaxed font-mono max-w-xs text-base sm:text-lg mx-auto">
-                Connect your wallet to access encrypted token features
-              </p>
-              <button
-                onClick={handleConnect}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors text-sm sm:text-base"
-              >
-                Connect Wallet
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Only show dashboard, always, but pass isConnected */}
+        <EncryptedTokenDashboard isConnected={isConnected} />
       </div>
     </div>
   );
