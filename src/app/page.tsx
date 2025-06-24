@@ -93,6 +93,11 @@ export default function Home() {
 
   const handleDisconnect = async () => {
     try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("W3M_CONNECTED");
+        localStorage.removeItem("wagmi.connected");
+        localStorage.removeItem("walletconnect");
+      }
       await disconnectAsync();
     } catch (error) {
       console.error("Disconnect error:", error);
