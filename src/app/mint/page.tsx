@@ -86,19 +86,16 @@ export default function MintPage() {
         {/* Mobile Header */}
         <header className="sm:hidden mb-16">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
-                <CloudIcon className="w-6 h-6 text-inco-blue" />
-                Incostream
-              </span>
-            </div>
-
+            <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
+              <CloudIcon className="w-6 h-6 text-inco-blue" />
+              Incostream
+            </span>
             <button
-              disabled
-              className="p-2 bg-gray-700 text-white/40 rounded cursor-not-allowed opacity-60"
-              aria-label="Toggle menu"
+              onClick={isConnected ? () => setShowConfirm(true) : handleConnect}
+              className={`px-4 py-2 ${isConnected ? 'bg-red-500/80 text-white border border-red-500/40 shadow hover:bg-red-600/90' : 'bg-inco-blue text-white hover:bg-inco-blue/90'} transition-colors rounded-full text-xs font-semibold`}
+              title={isConnected ? 'Disconnect' : 'Connect'}
             >
-              <HamburgerIcon isOpen={mobileMenuOpen} />
+              {isConnected ? 'Connected' : 'Connect'}
             </button>
           </div>
         </header>

@@ -85,13 +85,13 @@ const EncryptedTokenInterface = ({
   };
 
   return (
-    <div className="w-full bg-inco-navy/90 border border-white/10 p-8 h-full flex flex-col rounded-3xl shadow-2xl">
+    <div className="w-full max-w-md mx-auto bg-inco-navy/90 border border-white/10 p-4 sm:p-8 h-full flex flex-col rounded-3xl shadow-2xl">
       {/* Header Section */}
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold tracking-tight text-white">Encrypted Tokens</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 sm:mb-8">
+        <h2 className="text-lg sm:text-2xl font-bold tracking-tight text-white">Encrypted Tokens</h2>
         <button
           onClick={refreshBalance}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-40"
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-40 self-start sm:self-auto"
           disabled={isEncryptedLoading || !isConnected}
           title="Refresh"
         >
@@ -115,7 +115,7 @@ const EncryptedTokenInterface = ({
       </div>
 
       {/* Balance Section */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 sm:mb-8">
         <span className="text-white/60">Encrypted Balance</span>
         <div className="flex items-center gap-2">
           <div className="flex items-center px-4 py-2 rounded-full bg-white/10 border border-white/20 shadow-inner backdrop-blur-sm">
@@ -123,7 +123,7 @@ const EncryptedTokenInterface = ({
               <circle cx="12" cy="12" r="10" stroke="#3673F5" strokeWidth="2" fill="#3673F5" />
               <text x="12" y="16" textAnchor="middle" fontSize="10" fill="white" fontFamily="monospace">c$</text>
             </svg>
-            <span className="font-bold font-mono text-lg">
+            <span className="font-bold font-mono text-base sm:text-lg">
               {isEncryptedLoading ? <span className="text-white/40">Loading...</span> : (encryptedBalance || "0.00")}
             </span>
             <span className="ml-1 text-xs text-white/60">cUSDC</span>
@@ -132,7 +132,7 @@ const EncryptedTokenInterface = ({
       </div>
 
       {/* Input Section */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <input
           type="number"
           placeholder="Enter Amount to Mint"
@@ -149,7 +149,7 @@ const EncryptedTokenInterface = ({
               setAmount(num.toString());
             }
           }}
-          className="w-full p-4 bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-inco-blue/40 rounded-full transition-all text-base font-mono"
+          className="w-full p-3 sm:p-4 bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-inco-blue/40 rounded-full transition-all text-base font-mono"
           disabled={isLoading || !isConnected}
         />
       </div>
@@ -167,7 +167,7 @@ const EncryptedTokenInterface = ({
       {/* Action Button - Always at bottom */}
       <button
         onClick={handleMint}
-        className="w-full py-4 bg-gradient-to-r from-inco-blue/90 to-inco-blue rounded-full text-white font-bold text-base shadow-lg hover:from-inco-blue hover:to-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-mono mt-2"
+        className="w-full py-3 sm:py-4 bg-gradient-to-r from-inco-blue/90 to-inco-blue rounded-full text-white font-bold text-base shadow-lg hover:from-inco-blue hover:to-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-mono mt-2"
         disabled={!amount || Number(amount) <= 0 || isLoading || !isConnected}
       >
         {isLoading ? (

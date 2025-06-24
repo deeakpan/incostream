@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import EncryptedTokenDashboard from "@/components/encrypted-token-dashboard";
@@ -31,6 +31,18 @@ function CloudIcon({ className = "" }: { className?: string }) {
   );
 }
 
+function MagnifierIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+  );
+}
+
+function HamburgerIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+  );
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('active');
   const [search, setSearch] = useState('');
@@ -39,6 +51,9 @@ export default function Home() {
   const { disconnectAsync } = useDisconnect();
   const [mounted, setMounted] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -101,9 +116,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-inco-navy text-white font-sans flex">
-      {/* Sidebar */}
-      <aside className="w-56 min-h-screen bg-inco-navy flex flex-col items-center py-8 px-4 border-r border-white/10">
+    <div className="min-h-screen bg-inco-navy text-white font-sans flex flex-col sm:flex-row">
+      {/* Sidebar for desktop */}
+      <aside className="hidden sm:flex w-56 min-h-screen bg-inco-navy flex-col items-center py-8 px-4 border-r border-white/10">
         <div className="flex flex-col items-center w-full">
           <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue mb-4">
             <CloudIcon className="w-6 h-6 text-inco-blue" />
@@ -120,37 +135,118 @@ export default function Home() {
           </nav>
         </div>
       </aside>
+      {/* Top navbar for mobile */}
+      <header className="flex sm:hidden items-center justify-between px-4 py-4 border-b border-white/10 relative">
+        {/* Hamburger menu left */}
+        <button
+          className="p-2 rounded-full hover:bg-white/10 transition-colors mr-2"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+        >
+          <HamburgerIcon className="w-7 h-7 text-white" />
+        </button>
+        {/* Branding next to menu */}
+        <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
+          <CloudIcon className="w-6 h-6 text-inco-blue" />
+          Incostream
+        </span>
+        {/* Search icon center */}
+        <div className="flex-1 flex justify-center">
+          <button
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            onClick={() => {
+              setShowSearch((v) => !v);
+              setTimeout(() => searchInputRef.current?.focus(), 100);
+            }}
+            aria-label="Search"
+          >
+            <MagnifierIcon className="w-6 h-6 text-white" />
+          </button>
+        </div>
+        {/* Wallet button right */}
+          <div className="flex items-center gap-2">
+          <button
+            onClick={isConnected ? () => setShowConfirm(true) : handleConnect}
+            className={`px-4 py-2 ${isConnected ? 'bg-red-500/80 text-white border border-red-500/40 shadow hover:bg-red-600/90' : 'bg-inco-blue text-white hover:bg-inco-blue/90'} transition-colors rounded-full text-xs font-semibold`}
+            title={isConnected ? 'Disconnect' : 'Connect'}
+          >
+            {isConnected ? 'Connected' : 'Connect'}
+          </button>
+        </div>
+        {/* Mobile sidebar drawer */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 flex">
+            <div className="w-64 bg-inco-navy border-r border-white/10 flex flex-col p-6 shadow-2xl animate-slide-in-left">
+              <div className="flex items-center justify-between mb-6">
+                <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
+                  <CloudIcon className="w-6 h-6 text-inco-blue" />
+                  Incostream
+                </span>
+                <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close menu">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <nav className="flex flex-col gap-2 w-full mt-2">
+                <SidebarLink label="Mint" href="/mint" />
+                <SidebarLink label="Pending" href="#pending" />
+                <SidebarLink label="My Bids" href="#my-bids" />
+                <button className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full">
+                  Create Auction
+                </button>
+              </nav>
+            </div>
+            <div className="flex-1 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          </div>
+        )}
+      </header>
+      {/* Search input below header on mobile */}
+      {showSearch && (
+        <div className="px-4 py-2 bg-inco-navy border-b border-white/10 flex items-center">
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="flex-1 bg-inco-navy border border-white/10 text-white rounded-full px-4 py-2 transition-all shadow-lg focus:outline-none"
+            style={{ minWidth: 120 }}
+            autoFocus
+            onBlur={() => setShowSearch(false)}
+          />
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Tabs, Search, and Wallet Button */}
-        <div className="w-full max-w-7xl mx-auto flex items-center gap-2 px-6 pt-8 pb-4">
-          <div className="flex gap-1">
+        {/* Tabs, Search, and Wallet Button (responsive) */}
+        <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 px-2 sm:px-6 pt-4 sm:pt-8 pb-2 sm:pb-4">
+          <div className="flex gap-1 w-full sm:w-auto">
             {AUCTION_TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                className={`px-4 py-1 rounded font-medium text-sm transition-colors ${activeTab === tab.value ? 'bg-inco-blue text-white' : 'text-white/60 hover:bg-white/10'}`}
+                className={`px-4 py-1 rounded font-medium text-sm transition-colors w-full sm:w-auto ${activeTab === tab.value ? 'bg-inco-blue text-white' : 'text-white/60 hover:bg-white/10'}`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
+          {/* Search bar only on desktop */}
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search auctions..."
-            className="ml-4 flex-1 bg-transparent border-none outline-none text-white placeholder-white/40 text-sm px-3 py-1"
-            style={{ minWidth: 180 }}
+            className="hidden sm:block w-full sm:ml-4 sm:w-auto bg-transparent border-none outline-none text-white placeholder-white/40 text-sm px-3 py-1"
+            style={{ minWidth: 120 }}
           />
-          <div className="flex-1" />
-          {/* Wallet Connect/Disconnect Button (same as Mint page, but not rounded) */}
+          <div className="flex-1 hidden sm:block" />
+          {/* Wallet Connect/Disconnect Button only on desktop */}
           {isConnected ? (
             <>
               <button
                 onClick={() => setShowConfirm(true)}
-                className="flex items-center justify-center h-9 px-3 bg-red-500/80 text-white border border-red-500/40 rounded-full shadow hover:bg-red-600/90 transition-colors text-xs font-mono"
+                className="hidden sm:flex items-center justify-center h-9 px-3 bg-red-500/80 text-white border border-red-500/40 rounded-full shadow hover:bg-red-600/90 transition-colors text-xs font-mono w-full sm:w-auto"
                 title="Disconnect"
               >
                 {address?.slice(0, 6)}...{address?.slice(-4)}
@@ -165,20 +261,20 @@ export default function Home() {
           ) : (
             <button
               onClick={handleConnect}
-              className="px-6 py-2 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded-full text-sm font-semibold"
+              className="hidden sm:flex px-6 py-2 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded-full text-sm font-semibold w-full sm:w-auto"
             >
               Connect Wallet
             </button>
           )}
-        </div>
+            </div>
 
         {/* Active/Ended Auctions */}
-        <section className="max-w-7xl mx-auto px-4 pb-20">
+        <section className="max-w-7xl mx-auto px-2 sm:px-4 pb-20">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-inco-blue">{activeTab === 'active' ? 'Active Auctions' : 'Ended Auctions'}</h3>
             <span className="text-xs text-white/40">{filteredAuctions.length} found</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {filteredAuctions.length === 0 ? (
               <div className="col-span-full text-center text-white/50 py-12">No auctions found.</div>
             ) : (
@@ -195,11 +291,11 @@ export default function Home() {
                       <div>
                         <span className="text-xs text-white/50">Time Left</span>
                         <div className="text-xs">{auction.timeLeft}</div>
-                      </div>
-                    </div>
+                  </div>
+                  </div>
                     <button className="mt-3 px-3 py-1.5 bg-inco-blue text-white rounded-md font-semibold hover:bg-inco-blue/90 transition-colors text-xs">
                       Place Bid
-                    </button>
+                  </button>
                   </div>
                 </div>
               ))
@@ -217,7 +313,7 @@ function WalletIcon({ className = "" }: { className?: string }) {
       <rect x="2.5" y="5" width="15" height="10" rx="3" fill="currentColor" className="text-inco-blue/30" />
       <rect x="2.5" y="5" width="15" height="10" rx="3" stroke="currentColor" />
       <circle cx="15" cy="10" r="1" fill="currentColor" />
-    </svg>
-  );
+  </svg>
+);
 }
 
