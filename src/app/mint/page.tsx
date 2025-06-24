@@ -39,19 +39,22 @@ export default function MintPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-inco-navy flex items-center justify-center">
         <div className="text-white/60">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-inco-navy text-white">
       <div className="max-w-7xl mx-auto px-2 py-6">
         {/* Desktop Header */}
         <header className="hidden sm:flex items-center justify-between mb-16">
           <div className="flex items-center gap-2">
-            <IncoMainLogo />
+            <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
+              <CloudIcon className="w-6 h-6 text-inco-blue" />
+              Incostream
+            </span>
           </div>
 
           {isConnected ? (
@@ -84,7 +87,10 @@ export default function MintPage() {
         <header className="sm:hidden mb-16">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <IncoMainLogo />
+              <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
+                <CloudIcon className="w-6 h-6 text-inco-blue" />
+                Incostream
+              </span>
             </div>
 
             <button
@@ -104,30 +110,14 @@ export default function MintPage() {
   );
 }
 
-const IncoMainLogo = () => (
-  <svg
-    width="30"
-    height="30"
-    viewBox="0 0 200 200"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-6 h-6 sm:w-7 sm:h-7"
-  >
-    <path
-      d="M0 32C0 14.3269 14.2886 0 31.9145 0H167.551C185.177 0 199.466 14.3269 199.466 32V168C199.466 185.673 185.177 200 167.551 200H31.9145C14.2886 200 0 185.673 0 168V32Z"
-      fill="#3673F5"
-    />
-    <path d="M37.8984 138L58.0045 62H79.7858L59.68 138H37.8984Z" fill="white" />
-    <path
-      d="M79.7861 138L99.8931 62H121.674L101.568 138H79.7861Z"
-      fill="white"
-    />
-    <path
-      d="M121.674 138L141.78 62H163.562L143.456 138H121.674Z"
-      fill="white"
-    />
-  </svg>
-);
+function CloudIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M17.5 19a4.5 4.5 0 0 0 0-9c-.2 0-.4 0-.6.03A7 7 0 1 0 5 17.5" />
+      <path d="M17.5 19H7a4 4 0 1 1 0-8c.2 0 .4 0 .6.03" />
+    </svg>
+  );
+}
 
 const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
   <svg

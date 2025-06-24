@@ -11,6 +11,26 @@ const AUCTION_TABS = [
   { label: 'Ended', value: 'ended' },
 ];
 
+function SidebarLink({ label, href }: { label: string; href: string }) {
+  return (
+    <a
+      href={href}
+      className="px-3 py-2 rounded text-base font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full block text-left"
+    >
+      {label}
+    </a>
+  );
+}
+
+function CloudIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M17.5 19a4.5 4.5 0 0 0 0-9c-.2 0-.4 0-.6.03A7 7 0 1 0 5 17.5" />
+      <path d="M17.5 19H7a4 4 0 1 1 0-8c.2 0 .4 0 .6.03" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('active');
   const [search, setSearch] = useState('');
@@ -74,16 +94,16 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-inco-navy flex items-center justify-center">
         <div className="text-white/60">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black text-white font-sans flex">
+    <div className="min-h-screen bg-inco-navy text-white font-sans flex">
       {/* Sidebar */}
-      <aside className="w-56 min-h-screen bg-black flex flex-col items-center py-8 px-4 border-r border-white/10">
+      <aside className="w-56 min-h-screen bg-inco-navy flex flex-col items-center py-8 px-4 border-r border-white/10">
         <div className="flex flex-col items-center w-full">
           <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue mb-4">
             <CloudIcon className="w-6 h-6 text-inco-blue" />
@@ -188,26 +208,6 @@ export default function Home() {
         </section>
       </div>
     </div>
-  );
-}
-
-function SidebarLink({ label, href }: { label: string; href: string }) {
-  return (
-    <a
-      href={href}
-      className="px-3 py-2 rounded text-base font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full block text-left"
-    >
-      {label}
-    </a>
-  );
-}
-
-function CloudIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M17.5 19a4.5 4.5 0 0 0 0-9c-.2 0-.4 0-.6.03A7 7 0 1 0 5 17.5" />
-      <path d="M17.5 19H7a4 4 0 1 1 0-8c.2 0 .4 0 .6.03" />
-    </svg>
   );
 }
 

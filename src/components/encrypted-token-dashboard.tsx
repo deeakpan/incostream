@@ -4,7 +4,6 @@ import { formatEther, WalletClient } from "viem";
 import { ENCRYPTED_ERC20_CONTRACT_ADDRESS } from "@/utils/contract";
 import { reEncryptValue } from "@/utils/inco-lite";
 import EncryptedTokenInterface from "./encrypted-token-interface";
-import EncryptedSend from "./encrypted-send";
 import ReactDOM from "react-dom";
 
 interface EncryptedTokenDashboardProps {
@@ -74,7 +73,7 @@ const EncryptedTokenDashboard = ({ isConnected }: EncryptedTokenDashboardProps) 
   };
 
   return (
-    <div className="md:grid md:grid-cols-2 md:gap-8">
+    <div className="max-w-lg mx-auto bg-white/5 border border-white/10 rounded-2xl shadow-lg p-8 my-8">
       <EncryptedTokenInterface
         encryptedBalance={encryptedBalance}
         isEncryptedLoading={isEncryptedLoading}
@@ -82,7 +81,6 @@ const EncryptedTokenDashboard = ({ isConnected }: EncryptedTokenDashboardProps) 
         refreshBalance={refreshBalance}
         isConnected={isConnected}
       />
-      <EncryptedSend refreshBalance={refreshBalance} isConnected={isConnected} />
     </div>
   );
 };

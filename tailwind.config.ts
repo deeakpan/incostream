@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       colors: {
         "inco-blue": "#3673F5",
+        "inco-navy": "#0a1120",
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
