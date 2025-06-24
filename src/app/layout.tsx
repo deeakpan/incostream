@@ -14,8 +14,8 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Inco Nextjs Template",
-  description: "Inco Nextjs Template",
+  title: "Incostream",
+  description: "Auction house with private bids on base",
 };
 
 export default function RootLayout({

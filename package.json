@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coinbase/onchainkit": "^0.38.14",
     "@inco/js": "^0.2.11",
     "@tanstack/react-query": "^5.67.2",
     "@web3modal/ethereum": "^2.7.1",

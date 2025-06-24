@@ -1,26 +1,64 @@
-"use client";
+'use client';
 
+import { useState, useEffect } from "react";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { useEffect, useState } from "react";
 import EncryptedTokenDashboard from "@/components/encrypted-token-dashboard";
-import Image from "next/image";
+import { ConfirmModal } from "@/components/encrypted-token-dashboard";
+
+const AUCTION_TABS = [
+  { label: 'Active', value: 'active' },
+  { label: 'Ended', value: 'ended' },
+];
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState('active');
+  const [search, setSearch] = useState('');
   const { isConnected, address } = useAccount();
   const { open } = useWeb3Modal();
   const { disconnectAsync } = useDisconnect();
   const [mounted, setMounted] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Mock data for recent auctions
+  const recentAuctions = [
+    {
+      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+      title: 'Vintage NFT Collectible',
+      currentBid: '1.2 ETH',
+      timeLeft: '1h 45m',
+      status: 'active',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
+      title: 'Exclusive Music Track',
+      currentBid: '0.8 ETH',
+      timeLeft: '2h 10m',
+      status: 'ended',
+    },
+    {
+      image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
+      title: 'Digital Sculpture',
+      currentBid: '3.1 ETH',
+      timeLeft: '4h 5m',
+      status: 'active',
+    },
+  ];
+
+  // Filter auctions by tab and search
+  const filteredAuctions = recentAuctions.filter(
+    (auction) =>
+      auction.status === activeTab &&
+      auction.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   const handleDisconnect = async () => {
     try {
       await disconnectAsync();
-      setMobileMenuOpen(false);
     } catch (error) {
       console.error("Disconnect error:", error);
     }
@@ -29,7 +67,6 @@ export default function Home() {
   const handleConnect = () => {
     try {
       open();
-      setMobileMenuOpen(false);
     } catch (error) {
       console.error("Connect error:", error);
     }
@@ -44,189 +81,143 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto px-2 py-6">
-        {/* Desktop Header */}
-        <header className="hidden sm:flex items-center justify-between mb-16">
-          <div className="flex items-center gap-2">
-            <IncoMainLogo />
-            <h1 className="text-2xl font-medium font-mono">Inco Template</h1>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-950 to-black text-white font-sans flex">
+      {/* Sidebar */}
+      <aside className="w-56 min-h-screen bg-black flex flex-col items-center py-8 px-4 border-r border-white/10">
+        <div className="flex flex-col items-center w-full">
+          <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue mb-4">
+            <CloudIcon className="w-6 h-6 text-inco-blue" />
+            Incostream
+          </span>
+          <div className="w-full border-b border-white/10 mb-6" />
+          <nav className="flex flex-col gap-2 w-full mt-2">
+            <SidebarLink label="Mint" href="/mint" />
+            <SidebarLink label="Pending" href="#pending" />
+            <SidebarLink label="My Bids" href="#my-bids" />
+            <button className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full">
+              Create Auction
+            </button>
+          </nav>
+        </div>
+      </aside>
 
-          {isConnected ? (
-            <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-4 py-2">
-              <span className="text-sm font-mono">
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </span>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Tabs, Search, and Wallet Button */}
+        <div className="w-full max-w-7xl mx-auto flex items-center gap-2 px-6 pt-8 pb-4">
+          <div className="flex gap-1">
+            {AUCTION_TABS.map(tab => (
               <button
-                onClick={handleDisconnect}
-                className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-sm transition-colors"
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`px-4 py-1 rounded font-medium text-sm transition-colors ${activeTab === tab.value ? 'bg-inco-blue text-white' : 'text-white/60 hover:bg-white/10'}`}
               >
-                Disconnect
+                {tab.label}
               </button>
-            </div>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search auctions..."
+            className="ml-4 flex-1 bg-transparent border-none outline-none text-white placeholder-white/40 text-sm px-3 py-1"
+            style={{ minWidth: 180 }}
+          />
+          <div className="flex-1" />
+          {/* Wallet Connect/Disconnect Button (same as Mint page, but not rounded) */}
+          {isConnected ? (
+            <>
+              <button
+                onClick={() => setShowConfirm(true)}
+                className="flex items-center justify-center h-9 px-3 bg-red-500/80 text-white border border-red-500/40 rounded-full shadow hover:bg-red-600/90 transition-colors text-xs font-mono"
+                title="Disconnect"
+              >
+                {address?.slice(0, 6)}...{address?.slice(-4)}
+              </button>
+              <ConfirmModal
+                open={showConfirm}
+                onConfirm={async () => { setShowConfirm(false); await handleDisconnect(); }}
+                onCancel={() => setShowConfirm(false)}
+                address={address ?? ""}
+              />
+            </>
           ) : (
             <button
               onClick={handleConnect}
-              className="px-6 py-2.5 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors"
+              className="px-6 py-2 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded-full text-sm font-semibold"
             >
               Connect Wallet
             </button>
           )}
-        </header>
+        </div>
 
-        {/* Mobile Header */}
-        <header className="sm:hidden mb-16">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IncoMainLogo />
-              <h1 className="text-xl font-medium font-mono">Inco Template</h1>
-            </div>
-
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 hover:bg-white/10 transition-colors"
-              aria-label="Toggle menu"
-            >
-              <HamburgerIcon isOpen={mobileMenuOpen} />
-            </button>
+        {/* Active/Ended Auctions */}
+        <section className="max-w-7xl mx-auto px-4 pb-20">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-inco-blue">{activeTab === 'active' ? 'Active Auctions' : 'Ended Auctions'}</h3>
+            <span className="text-xs text-white/40">{filteredAuctions.length} found</span>
           </div>
-
-          {/* Mobile Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="mt-4 bg-white/5 border border-white/10 rounded-lg p-4">
-              {isConnected ? (
-                <div className="space-y-3">
-                  <div className="text-sm font-mono text-white/80 pb-2 border-b border-white/10">
-                    Connected Wallet
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredAuctions.length === 0 ? (
+              <div className="col-span-full text-center text-white/50 py-12">No auctions found.</div>
+            ) : (
+              filteredAuctions.map((auction, idx) => (
+                <div key={idx} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-md flex flex-col">
+                  <img src={auction.image} alt={auction.title} className="w-full h-36 object-cover" />
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <h4 className="text-base font-semibold mb-1">{auction.title}</h4>
+                    <div className="flex items-center justify-between mt-2">
+                      <div>
+                        <span className="text-xs text-white/50">Current Bid</span>
+                        <div className="text-sm font-medium">{auction.currentBid}</div>
+                      </div>
+                      <div>
+                        <span className="text-xs text-white/50">Time Left</span>
+                        <div className="text-xs">{auction.timeLeft}</div>
+                      </div>
+                    </div>
+                    <button className="mt-3 px-3 py-1.5 bg-inco-blue text-white rounded-md font-semibold hover:bg-inco-blue/90 transition-colors text-xs">
+                      Place Bid
+                    </button>
                   </div>
-                  <div className="text-xs font-mono break-all text-white/60">
-                    {address}
-                  </div>
-                  <button
-                    onClick={handleDisconnect}
-                    className="w-full px-4 py-2.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-sm transition-colors rounded"
-                  >
-                    Disconnect Wallet
-                  </button>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="text-sm font-mono text-white/80 pb-2 border-b border-white/10">
-                    Wallet Connection
-                  </div>
-                  <button
-                    onClick={handleConnect}
-                    className="w-full px-4 py-2.5 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors rounded"
-                  >
-                    Connect Wallet
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-        </header>
-
-        {isConnected ? (
-          <EncryptedTokenDashboard />
-        ) : (
-          <div className="flex flex-col items-center justify-center py-24">
-            <div className="text-center max-w-md px-4 sm:px-0">
-              <div className="flex w-full justify-center mb-6">
-                <Image
-                  src="https://cdn.prod.website-files.com/671156d33ac264346e223043/675a2a83d4ac40cf1352048c_logo%20(24).png"
-                  alt="Wallet"
-                  width={160}
-                  height={160}
-                />
-              </div>
-
-              <h2 className="text-xl sm:text-2xl mb-3">Connect Your Wallet</h2>
-              <p className="text-white/60 mb-8 leading-relaxed font-mono max-w-xs text-base sm:text-lg mx-auto">
-                Connect your wallet to access encrypted token features
-              </p>
-              <button
-                onClick={handleConnect}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors text-sm sm:text-base"
-              >
-                Connect Wallet
-              </button>
-            </div>
+              ))
+            )}
           </div>
-        )}
+        </section>
       </div>
     </div>
   );
 }
 
-const IncoMainLogo = () => (
-  <svg
-    width="30"
-    height="30"
-    viewBox="0 0 200 200"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="w-6 h-6 sm:w-7 sm:h-7"
-  >
-    <path
-      d="M0 32C0 14.3269 14.2886 0 31.9145 0H167.551C185.177 0 199.466 14.3269 199.466 32V168C199.466 185.673 185.177 200 167.551 200H31.9145C14.2886 200 0 185.673 0 168V32Z"
-      fill="#3673F5"
-    />
-    <path d="M37.8984 138L58.0045 62H79.7858L59.68 138H37.8984Z" fill="white" />
-    <path
-      d="M79.7861 138L99.8931 62H121.674L101.568 138H79.7861Z"
-      fill="white"
-    />
-    <path
-      d="M121.674 138L141.78 62H163.562L143.456 138H121.674Z"
-      fill="white"
-    />
-  </svg>
-);
+function SidebarLink({ label, href }: { label: string; href: string }) {
+  return (
+    <a
+      href={href}
+      className="px-3 py-2 rounded text-base font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors w-full block text-left"
+    >
+      {label}
+    </a>
+  );
+}
 
-const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="transition-transform duration-200"
-  >
-    <path
-      d={isOpen ? "M18 6L6 18" : "M3 12h18"}
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="transition-all duration-200"
-    />
-    {!isOpen && (
-      <>
-        <path
-          d="M3 6h18"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M3 18h18"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </>
-    )}
-    {isOpen && (
-      <path
-        d="M6 6l12 12"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    )}
-  </svg>
-);
+function CloudIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M17.5 19a4.5 4.5 0 0 0 0-9c-.2 0-.4 0-.6.03A7 7 0 1 0 5 17.5" />
+      <path d="M17.5 19H7a4 4 0 1 1 0-8c.2 0 .4 0 .6.03" />
+    </svg>
+  );
+}
+
+function WalletIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
+      <rect x="2.5" y="5" width="15" height="10" rx="3" fill="currentColor" className="text-inco-blue/30" />
+      <rect x="2.5" y="5" width="15" height="10" rx="3" stroke="currentColor" />
+      <circle cx="15" cy="10" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
