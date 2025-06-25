@@ -143,7 +143,7 @@ export default function MintNFTPage() {
         name,
         description,
         minter: address,
-        image: `ipfs://${imageCID}`
+        image: `https://gateway.lighthouse.storage/ipfs/${imageCID}`
       };
       const metadataStr = JSON.stringify(metadataObj, null, 2);
       // 3. Upload metadata JSON to Lighthouse
@@ -315,7 +315,7 @@ export default function MintNFTPage() {
                     <div className="mb-2">Description: {metaData.description}</div>
                     <div className="mb-2">Image: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.imageCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Image</a></div>
                     <div className="mb-2">Metadata: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.metaCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Metadata JSON</a></div>
-                    <MintOnChainButton tokenURI={`ipfs://${metaData.metaCID}`} />
+                    <MintOnChainButton tokenURI={`https://gateway.lighthouse.storage/ipfs/${metaData.metaCID}`} />
                   </div>
                 )}
               </>
