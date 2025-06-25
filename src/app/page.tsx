@@ -128,6 +128,20 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Mobile search bar, toggled by icon in header */}
+        {showSearch && (
+          <div className="sm:hidden px-4 pb-2">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search auctions..."
+              className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white placeholder-white/40 text-sm outline-none"
+              ref={searchInputRef}
+              autoFocus
+            />
+          </div>
+        )}
         {/* Tabs, Search, and Wallet Button (responsive) */}
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 px-2 sm:px-6 pt-4 sm:pt-8 pb-2 sm:pb-4">
           <div className="flex gap-1 w-full sm:w-auto">
@@ -135,7 +149,12 @@ export default function Home() {
               <button
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
-                className={`px-4 py-1 rounded font-medium text-sm transition-colors w-full sm:w-auto ${activeTab === tab.value ? 'bg-inco-blue text-white' : 'text-white/60 hover:bg-white/10'}`}
+                className={`px-4 py-1 rounded-none font-medium text-sm transition-colors w-full sm:w-auto
+                  ${activeTab === tab.value
+                    ? 'border-b-2 border-inco-blue text-inco-blue bg-transparent'
+                    : 'text-white/60 hover:bg-white/10 border-b-2 border-transparent'}
+                `}
+                style={{ background: 'none' }}
               >
                 {tab.label}
               </button>
@@ -177,21 +196,6 @@ export default function Home() {
             </button>
           )}
         </div>
-
-        {/* Mobile search bar, toggled by icon in header */}
-        {showSearch && (
-          <div className="sm:hidden px-4 pb-2">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search auctions..."
-              className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white placeholder-white/40 text-sm outline-none"
-              ref={searchInputRef}
-              autoFocus
-            />
-          </div>
-        )}
 
         {/* Active/Ended Auctions */}
         <section className="max-w-7xl mx-auto px-2 sm:px-4 pb-20">
