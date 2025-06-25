@@ -8,6 +8,7 @@ import ReactDOM from "react-dom";
 // @ts-ignore
 import lighthouse from '@lighthouse-web3/sdk';
 import { parseAbi } from 'viem';
+import { useState as useReactState } from "react";
 
 const LIGHTHOUSE_API_KEY = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
 const CONTRACT_ADDRESS = '0x3FcEda45e08D131238428848b887b4894C05e146';
@@ -83,6 +84,33 @@ function MintOnChainButton({ tokenURI }: { tokenURI: string }) {
   );
 }
 
+// CopyableTx component for transaction hash
+function CopyableTx({ txHash }: { txHash: string }) {
+  const [copied, setCopied] = useReactState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(txHash);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className="w-full mt-8 bg-white/10 border border-white/20 rounded-xl p-4 text-white">
+      <div className="mb-2 font-bold text-inco-blue">NFT Minted Successfully!</div>
+      <div className="mb-2 text-xs">Transaction Hash:</div>
+      <div className="mb-2 flex items-center gap-2">
+        <span className="text-xs break-all bg-white/20 p-2 rounded select-all" style={{ userSelect: 'all' }}>{txHash}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="px-2 py-1 text-xs rounded bg-inco-blue text-white hover:bg-inco-blue/90 transition-colors"
+        >
+          {copied ? "Copied!" : "Copy"}
+        </button>
+      </div>
+      <div className="mb-2"><a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View on BaseScan</a></div>
+    </div>
+  );
+}
+
 export default function MintNFTPage() {
   const { isConnected, address } = useAccount();
   const { open } = useWeb3Modal();
@@ -95,7 +123,7 @@ export default function MintNFTPage() {
   const [isMinting, setIsMinting] = useState(false);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [metaData, setMetaData] = useState<any>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -120,10 +148,11 @@ export default function MintNFTPage() {
     }
   };
 
+  const { writeContractAsync } = useWriteContract();
   const handleMint = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setMetaData(null);
+    setTxHash(null);
     if (!name || !description || !image) {
       setError("Please fill in all fields and select an image.");
       return;
@@ -150,7 +179,15 @@ export default function MintNFTPage() {
       const metaUpload = await lighthouse.uploadText(metadataStr, LIGHTHOUSE_API_KEY, name + "-metadata.json");
       const metaCID = metaUpload?.data?.Hash;
       if (!metaCID) throw new Error("Metadata upload failed");
-      setMetaData({ ...metadataObj, imageCID, metaCID });
+      // 4. Mint on-chain immediately
+      const tokenURI = `https://gateway.lighthouse.storage/ipfs/${metaCID}`;
+      const tx = await writeContractAsync({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'mint',
+        args: [tokenURI],
+      });
+      setTxHash(tx);
     } catch (err: any) {
       setError(err.message || "Minting failed");
     } finally {
@@ -305,19 +342,7 @@ export default function MintNFTPage() {
                     )}
                   </button>
                 </form>
-                {metaData && (
-                  <div className="w-full mt-8 bg-white/10 border border-white/20 rounded-xl p-4 text-white">
-                    <div className="mb-2 font-bold text-inco-blue">NFT Metadata Uploaded!</div>
-                    <div className="text-xs break-all mb-2">Metadata CID: <span className="font-mono">{metaData.metaCID}</span></div>
-                    <div className="text-xs break-all mb-2">Image CID: <span className="font-mono">{metaData.imageCID}</span></div>
-                    <div className="mb-2">Minter: <span className="font-mono">{metaData.minter}</span></div>
-                    <div className="mb-2">Name: {metaData.name}</div>
-                    <div className="mb-2">Description: {metaData.description}</div>
-                    <div className="mb-2">Image: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.imageCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Image</a></div>
-                    <div className="mb-2">Metadata: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.metaCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Metadata JSON</a></div>
-                    <MintOnChainButton tokenURI={`https://gateway.lighthouse.storage/ipfs/${metaData.metaCID}`} />
-                  </div>
-                )}
+                {txHash && <CopyableTx txHash={txHash} />}
               </>
             )}
           </div>
