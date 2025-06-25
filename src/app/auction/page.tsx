@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
+import Link from "next/link";
 
 function CloudIcon({ className = "" }: { className?: string }) {
   return (
@@ -65,10 +66,12 @@ export default function CreateAuctionPage() {
           <h1 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center text-inco-blue drop-shadow">Auction Types on Incostream</h1>
           <p className="text-white/70 text-center mb-8 text-lg max-w-xl">Incostream supports a variety of auction formats to empower creators, communities, and innovators. Explore the types below to see what you can launch or participate in!</p>
           <div className="w-full flex flex-col gap-6">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue">
-              <div className="text-xl font-bold text-inco-blue mb-1 font-sans">NFT Auctions (Classic Bids)</div>
-              <div className="text-white/80 text-base font-sans font-medium">Bid on unique NFTs. The highest bidder at the end wins and receives the NFT. Perfect for digital art, collectibles, and more.</div>
-            </div>
+            <Link href="/auction/nft-auction" className="block">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue cursor-pointer">
+                <div className="text-xl font-bold text-inco-blue mb-1 font-sans">NFT Auctions (Classic Bids)</div>
+                <div className="text-white/80 text-base font-sans font-medium">Bid on unique NFTs. The highest bidder at the end wins and receives the NFT. Perfect for digital art, collectibles, and more.</div>
+              </div>
+            </Link>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue">
               <div className="text-xl font-bold text-inco-blue mb-1 font-sans">Domain Auctions</div>
               <div className="text-white/80 text-base font-sans font-medium">Bid for ownership of web3 domain names (like .eth or .xyz). The highest bid wins the domain—ideal for branding and digital identity.</div>
