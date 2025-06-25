@@ -188,6 +188,10 @@ export default function MintNFTPage() {
         args: [tokenURI],
       });
       setTxHash(tx);
+      setName("");
+      setDescription("");
+      setImage(null);
+      setImagePreview(null);
     } catch (err: any) {
       setError(err.message || "Minting failed");
     } finally {

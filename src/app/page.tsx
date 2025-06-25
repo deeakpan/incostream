@@ -5,6 +5,8 @@ import { useAccount, useDisconnect } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import EncryptedTokenDashboard from "@/components/encrypted-token-dashboard";
 import { ConfirmModal } from "@/components/encrypted-token-dashboard";
+import Link from "next/link";
+import Sidebar from "@/components/sidebar";
 
 const AUCTION_TABS = [
   { label: 'Active', value: 'active' },
@@ -122,24 +124,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-inco-navy text-white font-sans flex flex-col sm:flex-row">
-      {/* Sidebar for desktop */}
-      <aside className="hidden sm:flex w-56 min-h-screen bg-inco-navy flex-col items-center py-8 px-4 border-r border-white/10">
-        <div className="flex flex-col items-center w-full">
-          <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue mb-4">
-            <CloudIcon className="w-6 h-6 text-inco-blue" />
-            Incostream
-          </span>
-          <div className="w-full border-b border-white/10 mb-6" />
-          <nav className="flex flex-col gap-2 w-full mt-2">
-            <SidebarLink label="Mint" href="/mint" />
-            <SidebarLink label="Pending" href="#pending" />
-            <SidebarLink label="My Bids" href="#my-bids" />
-            <button className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full">
-              Create Auction
-            </button>
-          </nav>
-        </div>
-      </aside>
+      <Sidebar />
       {/* Top navbar for mobile */}
       <header className="flex sm:hidden items-center justify-between px-4 py-4 border-b border-white/10 relative">
         {/* Hamburger menu left */}
@@ -195,9 +180,9 @@ export default function Home() {
                 <SidebarLink label="Mint" href="/mint" />
                 <SidebarLink label="Pending" href="#pending" />
                 <SidebarLink label="My Bids" href="#my-bids" />
-                <button className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full">
+                <Link href="/auction" className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full text-center block">
                   Create Auction
-                </button>
+                </Link>
               </nav>
             </div>
             <div className="flex-1 bg-black/40" onClick={() => setSidebarOpen(false)} />
