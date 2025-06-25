@@ -124,87 +124,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-inco-navy text-white font-sans flex flex-col sm:flex-row">
-      <Sidebar />
-      {/* Top navbar for mobile */}
-      <header className="flex sm:hidden items-center justify-between px-4 py-4 border-b border-white/10 relative">
-        {/* Hamburger menu left */}
-        <button
-          className="p-2 rounded-full hover:bg-white/10 transition-colors mr-2"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-        >
-          <HamburgerIcon className="w-7 h-7 text-white" />
-        </button>
-        {/* Branding next to menu */}
-        <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
-          <CloudIcon className="w-6 h-6 text-inco-blue" />
-          Incostream
-        </span>
-        {/* Search icon center */}
-        <div className="flex-1 flex justify-center">
-          <button
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            onClick={() => {
-              setShowSearch((v) => !v);
-              setTimeout(() => searchInputRef.current?.focus(), 100);
-            }}
-            aria-label="Search"
-          >
-            <MagnifierIcon className="w-6 h-6 text-white" />
-          </button>
-        </div>
-        {/* Wallet button right */}
-          <div className="flex items-center gap-2">
-          <button
-            onClick={isConnected ? () => setShowConfirm(true) : handleConnect}
-            className={`px-4 py-2 ${isConnected ? 'bg-red-500/80 text-white border border-red-500/40 shadow hover:bg-red-600/90' : 'bg-inco-blue text-white hover:bg-inco-blue/90'} transition-colors rounded-full text-xs font-semibold`}
-            title={isConnected ? 'Disconnect' : 'Connect'}
-          >
-            {isConnected ? 'Connected' : 'Connect'}
-          </button>
-        </div>
-        {/* Mobile sidebar drawer */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-40 flex">
-            <div className="w-64 bg-inco-navy border-r border-white/10 flex flex-col p-6 shadow-2xl animate-slide-in-left">
-              <div className="flex items-center justify-between mb-6">
-                <span className="flex items-center gap-2 text-xl font-extrabold tracking-tight text-inco-blue">
-                  <CloudIcon className="w-6 h-6 text-inco-blue" />
-                  Incostream
-                </span>
-                <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close menu">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-              <nav className="flex flex-col gap-2 w-full mt-2">
-                <SidebarLink label="Mint" href="/mint" />
-                <SidebarLink label="Pending" href="#pending" />
-                <SidebarLink label="My Bids" href="#my-bids" />
-                <Link href="/auction" className="mt-4 px-4 py-2 bg-inco-blue text-white font-semibold shadow hover:bg-inco-blue/90 transition-colors text-sm w-full rounded-full text-center block">
-                  Create Auction
-                </Link>
-              </nav>
-            </div>
-            <div className="flex-1 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          </div>
-        )}
-      </header>
-      {/* Search input below header on mobile */}
-      {showSearch && (
-        <div className="px-4 py-2 bg-inco-navy border-b border-white/10 flex items-center">
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search..."
-            className="flex-1 bg-inco-navy border border-white/10 text-white rounded-full px-4 py-2 transition-all shadow-lg focus:outline-none"
-            style={{ minWidth: 120 }}
-            autoFocus
-            onBlur={() => setShowSearch(false)}
-          />
-        </div>
-      )}
+      <Sidebar onMobileSearchClick={() => setShowSearch((v) => !v)} />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -256,7 +176,22 @@ export default function Home() {
               Connect Wallet
             </button>
           )}
-            </div>
+        </div>
+
+        {/* Mobile search bar, toggled by icon in header */}
+        {showSearch && (
+          <div className="sm:hidden px-4 pb-2">
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search auctions..."
+              className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white placeholder-white/40 text-sm outline-none"
+              ref={searchInputRef}
+              autoFocus
+            />
+          </div>
+        )}
 
         {/* Active/Ended Auctions */}
         <section className="max-w-7xl mx-auto px-2 sm:px-4 pb-20">
