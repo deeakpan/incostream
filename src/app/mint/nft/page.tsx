@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useWriteContract } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import Image from "next/image";
 import ReactDOM from "react-dom";
 // @ts-ignore
 import lighthouse from '@lighthouse-web3/sdk';
+import { parseAbi } from 'viem';
 
 const LIGHTHOUSE_API_KEY = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
+const CONTRACT_ADDRESS = '0x3FcEda45e08D131238428848b887b4894C05e146';
+const CONTRACT_ABI = parseAbi([
+  'function mint(string tokenURI) public returns (uint256)'
+]);
 
 // CloudIcon copied for branding consistency
 function CloudIcon({ className = "" }: { className?: string }) {
@@ -34,6 +39,47 @@ function ConfirmModal({ open, onConfirm, onCancel, address }: { open: boolean; o
       </div>
     </div>,
     document.body
+  );
+}
+
+// MintOnChainButton component
+function MintOnChainButton({ tokenURI }: { tokenURI: string }) {
+  const { writeContractAsync, isPending } = useWriteContract();
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleMint = async () => {
+    setError(null);
+    setTxHash(null);
+    try {
+      const tx = await writeContractAsync({
+        address: CONTRACT_ADDRESS,
+        abi: CONTRACT_ABI,
+        functionName: 'mint',
+        args: [tokenURI],
+      });
+      setTxHash(tx);
+    } catch (err: any) {
+      setError(err.message || 'Mint failed');
+    }
+  };
+
+  return (
+    <div className="mt-4">
+      <button
+        onClick={handleMint}
+        disabled={isPending}
+        className="w-full py-3 bg-gradient-to-r from-inco-blue/90 to-inco-blue rounded-full text-white font-bold text-base shadow-lg hover:from-inco-blue hover:to-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+      >
+        {isPending ? 'Minting On-Chain...' : 'Mint On-Chain'}
+      </button>
+      {txHash && (
+        <div className="mt-2 text-xs break-all">Tx: <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">{txHash}</a></div>
+      )}
+      {error && (
+        <div className="mt-2 text-xs text-red-400">{error}</div>
+      )}
+    </div>
   );
 }
 
@@ -269,6 +315,7 @@ export default function MintNFTPage() {
                     <div className="mb-2">Description: {metaData.description}</div>
                     <div className="mb-2">Image: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.imageCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Image</a></div>
                     <div className="mb-2">Metadata: <a href={`https://gateway.lighthouse.storage/ipfs/${metaData.metaCID}`} target="_blank" rel="noopener noreferrer" className="underline text-inco-blue">View Metadata JSON</a></div>
+                    <MintOnChainButton tokenURI={`ipfs://${metaData.metaCID}`} />
                   </div>
                 )}
               </>
