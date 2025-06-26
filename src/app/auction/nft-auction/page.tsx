@@ -5,6 +5,8 @@ import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { fetchNftsForOwner } from '@/utils/fetchNfts';
 import { CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS, CONFIDENTIAL_AUCTION_ABI } from '@/utils/contract';
 import { ethers } from 'ethers';
+// @ts-ignore
+import lighthouse from '@lighthouse-web3/sdk';
 
 // Fix for TypeScript: declare window.ethereum
 declare global {
@@ -213,6 +215,48 @@ export default function NFTAuctionPage() {
         console.log('NFT approved for auction contract');
       }
       
+      // Upload auction metadata to Lighthouse
+      const auctionMetadata = {
+        name: auctionName,
+        description: description,
+        minBid: minBid,
+        nftContract: nftContractAddress,
+        tokenId: selectedNFT.tokenId,
+        endTime: new Date(`${auctionEndDate}T${auctionEndTime}`).toISOString(),
+        createdBy: walletClient.account.address
+      };
+      
+      console.log('Uploading auction metadata to Lighthouse...');
+      const metadataStr = JSON.stringify(auctionMetadata, null, 2);
+      
+      // Check if API key is available
+      if (!process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY) {
+        throw new Error('Lighthouse API key is not configured');
+      }
+      
+      console.log('Using Lighthouse API key:', process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY.substring(0, 10) + '...');
+      
+      let metadataURI: string;
+      try {
+        const lighthouseResponse = await lighthouse.uploadText(
+          metadataStr, 
+          process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY, 
+          'auction-metadata.json'
+        );
+        
+        console.log('Lighthouse response:', lighthouseResponse);
+        
+        if (!lighthouseResponse?.data?.Hash) {
+          throw new Error('Failed to upload metadata to Lighthouse - no hash returned');
+        }
+        
+        metadataURI = `ipfs://${lighthouseResponse.data.Hash}`;
+        console.log('Metadata uploaded to Lighthouse:', metadataURI);
+      } catch (uploadError: any) {
+        console.error('Lighthouse upload error:', uploadError);
+        throw new Error(`Failed to upload metadata to Lighthouse: ${uploadError.message}`);
+      }
+      
       // Create auction contract instance
       const contract = new ethers.Contract(
         CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS,
@@ -226,14 +270,21 @@ export default function NFTAuctionPage() {
       console.log('Creating auction with:', {
         nftContractAddress,
         tokenId: selectedNFT.tokenId,
-        endTime
+        endTime,
+        metadataURI,
+        minBid
       });
+      
+      // Convert minBid to proper format (assuming cUSDC has 18 decimals like USDC)
+      const minBidWei = ethers.utils.parseEther(minBid);
       
       // The createAuction function will automatically transfer the NFT to escrow
       const tx = await contract.createAuction(
         nftContractAddress,
         selectedNFT.tokenId,
-        endTime
+        endTime,
+        metadataURI,
+        minBidWei
       );
       setTxHash(tx.hash);
       await tx.wait();

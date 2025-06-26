@@ -17,6 +17,8 @@ contract ConfidentialAuction is IERC721Receiver {
         address nftAddress;
         uint256 tokenId;
         uint256 endTime;
+        string metadataURI;
+        uint256 minBid;
         address highestBidder;
         bytes highestBid;
         bool settled;
@@ -29,7 +31,7 @@ contract ConfidentialAuction is IERC721Receiver {
     // Track NFTs that are in escrow but not in active auctions
     mapping(address => mapping(uint256 => address)) public nftEscrow; // nftContract => tokenId => owner
 
-    event AuctionCreated(uint256 indexed auctionId, address indexed seller, address nft, uint256 tokenId, uint256 endTime);
+    event AuctionCreated(uint256 indexed auctionId, address indexed seller, address nft, uint256 tokenId, uint256 endTime, string metadataURI, uint256 minBid);
     event BidPlaced(uint256 indexed auctionId, address indexed bidder, bytes encryptedBid);
     event AuctionSettled(uint256 indexed auctionId, address winner);
     event NFTRecovered(address indexed owner, address nftContract, uint256 tokenId);
@@ -49,8 +51,15 @@ contract ConfidentialAuction is IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
-    function createAuction(address nftAddress, uint256 tokenId, uint256 endTime) external returns (uint256) {
+    function createAuction(
+        address nftAddress, 
+        uint256 tokenId, 
+        uint256 endTime,
+        string memory metadataURI,
+        uint256 minBid
+    ) external returns (uint256) {
         require(endTime > block.timestamp, "End time must be in the future");
+        require(minBid > 0, "Minimum bid must be greater than 0");
         
         // Transfer NFT to this contract (will trigger onERC721Received)
         IERC721(nftAddress).safeTransferFrom(msg.sender, address(this), tokenId);
@@ -63,11 +72,13 @@ contract ConfidentialAuction is IERC721Receiver {
             nftAddress: nftAddress,
             tokenId: tokenId,
             endTime: endTime,
+            metadataURI: metadataURI,
+            minBid: minBid,
             highestBidder: address(0),
             highestBid: "",
             settled: false
         });
-        emit AuctionCreated(auctionCount, msg.sender, nftAddress, tokenId, endTime);
+        emit AuctionCreated(auctionCount, msg.sender, nftAddress, tokenId, endTime, metadataURI, minBid);
         return auctionCount++;
     }
 
@@ -82,7 +93,10 @@ contract ConfidentialAuction is IERC721Receiver {
         Auction storage auction = auctions[auctionId];
         require(block.timestamp < auction.endTime, "Auction ended");
         require(!auction.settled, "Auction settled");
+        
         // FHE comparison: require(FHE.gt(encryptedBid, auction.highestBid), "Bid not high enough");
+        // FHE comparison: require(FHE.gte(encryptedBid, auction.minBid), "Bid below minimum");
+        
         cUSDC.transferFrom(msg.sender, address(this), encryptedBid);
         auction.highestBidder = msg.sender;
         auction.highestBid = encryptedBid;
