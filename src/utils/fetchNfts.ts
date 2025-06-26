@@ -56,7 +56,13 @@ export async function fetchNftsForOwner(address: string) {
       // log error, just return what we have
       console.warn(`Failed to fetch NFT at index ${i}:`, e);
     }
-    nfts.push({ tokenId, tokenURI, metadata });
+    nfts.push({ 
+      tokenId, 
+      tokenURI, 
+      metadata,
+      contractAddress: CONTRACT_ADDRESS,
+      contract: { address: CONTRACT_ADDRESS }
+    });
   }
   return nfts;
 } 

@@ -1,8 +1,17 @@
 'use client';
-import React, { useState, useEffect } from "react";
-import { useAccount, useDisconnect } from "wagmi";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useAccount, useDisconnect, useWalletClient } from "wagmi";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { fetchNftsForOwner } from '@/utils/fetchNfts';
+import { CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS, CONFIDENTIAL_AUCTION_ABI } from '@/utils/contract';
+import { ethers } from 'ethers';
+
+// Fix for TypeScript: declare window.ethereum
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
 
 function CloudIcon({ className = "" }: { className?: string }) {
   return (
@@ -22,6 +31,7 @@ export default function NFTAuctionPage() {
   const { isConnected, address } = useAccount();
   const { open } = useWeb3Modal();
   const { disconnectAsync } = useDisconnect();
+  const { data: walletClient } = useWalletClient();
   const [showConfirm, setShowConfirm] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -36,27 +46,108 @@ export default function NFTAuctionPage() {
   const [loadingMetadataIdx, setLoadingMetadataIdx] = useState<number | null>(null);
   const [auctionEndDate, setAuctionEndDate] = useState('');
   const [auctionEndTime, setAuctionEndTime] = useState('');
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [txError, setTxError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Fetch NFTs for connected wallet using Alchemy SDK
-  useEffect(() => {
-    console.log('NFT fetch effect running', { isConnected, address });
-    if (!isConnected || !address) return;
+  // Memoize the NFT fetching to prevent excessive calls
+  const fetchNFTs = useCallback(async (address: string) => {
     setLoadingNFTs(true);
     setNftError('');
-    fetchNftsForOwner(address).then(nfts => {
+    try {
+      const nfts = await fetchNftsForOwner(address);
       console.log('NFTs fetched in component:', nfts);
       setNfts(nfts);
-    }).catch(e => {
+    } catch (e) {
       console.error('Error fetching NFTs:', e);
       setNftError('Failed to fetch NFTs.');
-    }).finally(() => {
+    } finally {
       setLoadingNFTs(false);
+    }
+  }, []);
+
+  // Fetch NFTs for connected wallet using Alchemy SDK
+  useEffect(() => {
+    if (!isConnected || !address) return;
+    fetchNFTs(address);
+  }, [isConnected, address, fetchNFTs]);
+
+  // Fetch NFT metadata if missing when selected
+  const handleSelectNFT = useCallback(async (nft: any, idx: number) => {
+    setLoadingMetadataIdx(idx);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+      const contractAddress = nft.contract?.address || nft.contractAddress;
+      
+      if (!contractAddress) {
+        console.warn('No contract address found for NFT:', nft);
+        setSelectedNFT(nft);
+        return;
+      }
+      
+      const url = `https://base-sepolia.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${contractAddress}&tokenId=${nft.tokenId}`;
+      const res = await fetch(url);
+      const meta = await res.json();
+      const updatedNFT = { ...nft, ...meta };
+      setSelectedNFT(updatedNFT);
+    } catch (err) {
+      console.error('Error fetching NFT metadata:', err);
+      setSelectedNFT(nft);
+    } finally {
+      setLoadingMetadataIdx(null);
+    }
+  }, []);
+
+  // Memoize NFT rendering to prevent excessive re-renders
+  const renderedNFTs = useMemo(() => {
+    return nfts.map((nft, idx) => {
+      const meta = nft.metadata || {};
+      let img = meta.image || '';
+      if (img) {
+        if (img.startsWith('ipfs://')) {
+          img = img.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+        } else if (!img.startsWith('http')) {
+          img = `https://cloudflare-ipfs.com/ipfs/${img}`;
+        }
+      }
+      const isSelected = selectedNFT?.tokenId === nft.tokenId;
+      
+      return (
+        <div
+          key={`${nft.tokenId?.toString?.() || nft.tokenId}:${idx}`}
+          className={`flex flex-col items-center border rounded-xl p-4 bg-white/10 transition-colors shadow-md cursor-pointer ${isSelected ? 'border-inco-blue ring-2 ring-inco-blue' : 'border-white/20 hover:border-inco-blue/60'}`}
+          onClick={() => handleSelectNFT(nft, idx)}
+          style={{ position: 'relative', pointerEvents: loadingMetadataIdx === idx ? 'none' : 'auto' }}
+        >
+          {loadingMetadataIdx === idx && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 rounded-xl">
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </div>
+          )}
+          {img ? (
+            <img
+              src={img}
+              alt={meta.name || 'NFT'}
+              className="w-24 h-24 object-cover rounded-lg mb-3 border border-white/10 shadow"
+              onError={e => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = 'https://placehold.co/96x96?text=No+Img';
+              }}
+            />
+          ) : (
+            <div className="w-24 h-24 flex items-center justify-center bg-white/10 rounded-lg mb-3 text-xs text-white/40 border border-white/10 shadow">
+              No Image
+            </div>
+          )}
+          <div className="font-mono text-sm text-white font-bold mb-1 truncate w-full text-center">{meta.name || '—'}</div>
+          <div className="text-xs text-white/70 text-center line-clamp-2 w-full">{meta.description || '—'}</div>
+        </div>
+      );
     });
-  }, [isConnected, address]);
+  }, [nfts, selectedNFT, loadingMetadataIdx, handleSelectNFT]);
 
   const handleDisconnect = async () => {
     try {
@@ -79,27 +170,76 @@ export default function NFTAuctionPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: handle auction creation logic
-    alert(`Auction Created!\nName: ${auctionName}\nDescription: ${description}\nMin Bid: ${minBid} cUSDC\nNFT: ${selectedNFT?.title?.name || selectedNFT?.metadata?.name || selectedNFT?.tokenId}`);
-  };
-
-  // Fetch NFT metadata if missing when selected
-  const handleSelectNFT = async (nft: any, idx: number) => {
-    setLoadingMetadataIdx(idx); // Always set spinner immediately
+    setTxHash(null);
+    setTxError(null);
+    if (!walletClient || !selectedNFT || !auctionEndDate || !auctionEndTime) return;
+    
+    // Debug logging
+    console.log('Selected NFT:', selectedNFT);
+    console.log('Contract address:', selectedNFT.contract?.address || selectedNFT.contractAddress);
+    
     try {
-      const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-      const url = `https://base-sepolia.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${nft.contract?.address}&tokenId=${nft.tokenId}`;
-      const res = await fetch(url);
-      const meta = await res.json();
-      // Merge fetched metadata into NFT object
-      const updatedNFT = { ...nft, ...meta };
-      setSelectedNFT(updatedNFT);
-    } catch (err) {
-      setSelectedNFT(nft); // fallback
-    } finally {
-      setLoadingMetadataIdx(null);
+      // Create ethers.js provider and signer from window.ethereum (ethers v5)
+      const ethersProvider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = ethersProvider.getSigner(walletClient.account.address);
+      
+      // Get the correct NFT contract address
+      const nftContractAddress = selectedNFT.contract?.address || selectedNFT.contractAddress;
+      if (!nftContractAddress) {
+        throw new Error('NFT contract address not found');
+      }
+      
+      // Create NFT contract instance for approval
+      const nftContract = new ethers.Contract(
+        nftContractAddress,
+        [
+          "function approve(address to, uint256 tokenId) external",
+          "function getApproved(uint256 tokenId) external view returns (address)"
+        ],
+        signer
+      );
+      
+      // Check if auction contract is already approved
+      const approvedAddress = await nftContract.getApproved(selectedNFT.tokenId);
+      const isApproved = approvedAddress === CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS;
+      
+      if (!isApproved) {
+        console.log('Approving NFT for auction contract...');
+        const approveTx = await nftContract.approve(CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS, selectedNFT.tokenId);
+        console.log('Approval transaction hash:', approveTx.hash);
+        await approveTx.wait();
+        console.log('NFT approved for auction contract');
+      }
+      
+      // Create auction contract instance
+      const contract = new ethers.Contract(
+        CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS,
+        CONFIDENTIAL_AUCTION_ABI,
+        signer
+      );
+      
+      const endDateTime = new Date(`${auctionEndDate}T${auctionEndTime}`);
+      const endTime = Math.floor(endDateTime.getTime() / 1000);
+      
+      console.log('Creating auction with:', {
+        nftContractAddress,
+        tokenId: selectedNFT.tokenId,
+        endTime
+      });
+      
+      // The createAuction function will automatically transfer the NFT to escrow
+      const tx = await contract.createAuction(
+        nftContractAddress,
+        selectedNFT.tokenId,
+        endTime
+      );
+      setTxHash(tx.hash);
+      await tx.wait();
+    } catch (err: any) {
+      console.error('Auction creation error:', err);
+      setTxError(err?.reason || err?.message || 'Transaction failed');
     }
   };
 
@@ -255,50 +395,7 @@ export default function NFTAuctionPage() {
               <div className="text-red-400 text-sm">No NFTs found in your wallet or failed to load NFTs. Check the browser console for debug output.</div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {nfts.map((nft, idx) => {
-                  console.log('NFT:', nft); // DEBUG: log the full NFT object
-                  const meta = nft.metadata || {};
-                  let img = meta.image || '';
-                  if (img) {
-                    if (img.startsWith('ipfs://')) {
-                      img = img.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
-                    } else if (!img.startsWith('http')) {
-                      img = `https://cloudflare-ipfs.com/ipfs/${img}`;
-                    }
-                  }
-                  const isSelected = selectedNFT?.tokenId === nft.tokenId;
-                  return (
-                    <div
-                      key={`${nft.tokenId?.toString?.() || nft.tokenId}:${idx}`}
-                      className={`flex flex-col items-center border rounded-xl p-4 bg-white/10 transition-colors shadow-md cursor-pointer ${isSelected ? 'border-inco-blue ring-2 ring-inco-blue' : 'border-white/20 hover:border-inco-blue/60'}`}
-                      onClick={() => handleSelectNFT(nft, idx)}
-                      style={{ position: 'relative', pointerEvents: loadingMetadataIdx === idx ? 'none' : 'auto' }}
-                    >
-                      {loadingMetadataIdx === idx && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 rounded-xl">
-                          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        </div>
-                      )}
-                      {img ? (
-                        <img
-                          src={img}
-                          alt={meta.name || 'NFT'}
-                          className="w-24 h-24 object-cover rounded-lg mb-3 border border-white/10 shadow"
-                          onError={e => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = 'https://placehold.co/96x96?text=No+Img';
-                          }}
-                        />
-                      ) : (
-                        <div className="w-24 h-24 flex items-center justify-center bg-white/10 rounded-lg mb-3 text-xs text-white/40 border border-white/10 shadow">
-                          No Image
-                        </div>
-                      )}
-                      <div className="font-mono text-sm text-white font-bold mb-1 truncate w-full text-center">{meta.name || '—'}</div>
-                      <div className="text-xs text-white/70 text-center line-clamp-2 w-full">{meta.description || '—'}</div>
-                    </div>
-                  );
-                })}
+                {renderedNFTs}
               </div>
             )}
           </div>
@@ -310,6 +407,12 @@ export default function NFTAuctionPage() {
             Create Auction
           </button>
         </form>
+        {txHash && (
+          <div className="mt-4 text-green-400 text-sm font-mono">Auction created! Tx: <a href={`https://sepolia.basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="underline">{txHash.slice(0, 10)}...</a></div>
+        )}
+        {txError && (
+          <div className="mt-4 text-red-400 text-sm font-mono">Error: {txError}</div>
+        )}
       </div>
     </div>
   );
