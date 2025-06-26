@@ -268,9 +268,12 @@ export default function MintNFTPage() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="max-w-md w-full mx-auto flex flex-col gap-8 items-center py-16">
+            <div className="w-full flex justify-center mb-2">
+              <span className="text-xs text-yellow-400 bg-yellow-900/40 px-3 py-1 rounded-full font-semibold">NOTE: only available on Base Sepolia (Testnet environment)</span>
+            </div>
             <h1 className="text-2xl font-bold text-center mb-2">Mint Your NFT (ERC-721)</h1>
             <p className="text-white/70 text-center mb-4">
-              Create a unique NFT to launch your own auction on Incostream. Enter a name, description, and upload an image. Your NFT will be minted to your connected wallet on Base Sepolia.
+              Mint a unique NFT to start your auction. Add a name, description, and image. Your NFT goes straight to your wallet on Base Sepolia.
             </p>
             {!isConnected ? (
               <div className="w-full flex flex-col items-center gap-4 bg-white/5 border border-white/10 rounded-2xl shadow-lg p-8">

@@ -64,25 +64,28 @@ export default function CreateAuctionPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <div className="max-w-2xl w-full mx-auto flex flex-col gap-8 items-center py-24">
           <h1 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center text-inco-blue drop-shadow">Auction Types on Incostream</h1>
-          <p className="text-white/70 text-center mb-8 text-lg max-w-xl">Incostream supports a variety of auction formats to empower creators, communities, and innovators. Explore the types below to see what you can launch or participate in!</p>
+          <p className="text-white/70 text-center mb-8 text-lg max-w-xl">Explore auction types you can launch or join on Incostream.</p>
+          <div className="w-full flex justify-center mb-2">
+            <span className="text-xs text-yellow-400 bg-yellow-900/40 px-3 py-1 rounded-full font-semibold">NOTE: only available on Base Sepolia (Testnet environment)</span>
+          </div>
           <div className="w-full flex flex-col gap-6">
             <Link href="/auction/nft-auction" className="block">
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue cursor-pointer">
                 <div className="text-xl font-bold text-inco-blue mb-1 font-sans">NFT Auctions (Classic Bids)</div>
-                <div className="text-white/80 text-base font-sans font-medium">Bid on unique NFTs. The highest bidder at the end wins and receives the NFT. Perfect for digital art, collectibles, and more.</div>
+                <div className="text-white/80 text-base font-sans font-medium">Bid on unique NFTs. Highest bid wins.</div>
               </div>
             </Link>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue">
               <div className="text-xl font-bold text-inco-blue mb-1 font-sans">Domain Auctions</div>
-              <div className="text-white/80 text-base font-sans font-medium">Bid for ownership of web3 domain names (like .eth or .xyz). The highest bid wins the domain—ideal for branding and digital identity.</div>
+              <div className="text-white/80 text-base font-sans font-medium">Bid for web3 domains like .eth or .xyz. Top bid wins.</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue">
               <div className="text-xl font-bold text-inco-blue mb-1 font-sans">Text/Content Auctions</div>
-              <div className="text-white/80 text-base font-sans font-medium">Bid to have your message, proposal, or content featured—on-chain, on a website, or as a shoutout. Great for advertising, memes, or proposals.</div>
+              <div className="text-white/80 text-base font-sans font-medium">Bid to feature your message or content on-chain or on the site.</div>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg transition-colors hover:border-inco-blue">
               <div className="text-xl font-bold text-inco-blue mb-1 font-sans">Poll Auctions</div>
-              <div className="text-white/80 text-base font-sans font-medium">Participants vote on different options (NFTs, links, or proposals). The option with the most votes is selected for a special purpose, such as being featured or used in a project.</div>
+              <div className="text-white/80 text-base font-sans font-medium">Vote on NFTs, links, or proposals. Most votes wins.</div>
             </div>
           </div>
         </div>

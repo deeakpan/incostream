@@ -173,9 +173,12 @@ export default function NFTAuctionPage() {
           </div>
         </div>
       )}
+      <div className="w-full flex justify-center mb-2">
+        <span className="text-xs text-yellow-400 bg-yellow-900/40 px-3 py-1 rounded-full font-semibold">NOTE: only available on Base Sepolia (Testnet environment)</span>
+      </div>
       <div className="flex-1 w-full flex flex-col items-center justify-center">
         <h1 className="text-3xl sm:text-4xl font-extrabold mb-4 text-inco-blue drop-shadow">NFT Auction</h1>
-        <p className="text-white/70 text-center max-w-xl text-lg mb-8">Create a new NFT auction. Select an NFT from your wallet, set a minimum bid (in cUSDC), and provide auction details.</p>
+        <p className="text-white/70 text-center max-w-xl text-lg mb-8">Start an NFT auction. Pick an NFT, set a minimum bid (cUSDC), and add details.</p>
         <form onSubmit={handleSubmit} className="w-full max-w-lg bg-white/5 border border-white/10 rounded-2xl shadow-lg p-8 flex flex-col gap-6">
           <div>
             <label className="block text-sm font-semibold mb-2">Auction Name</label>
@@ -219,6 +222,17 @@ export default function NFTAuctionPage() {
           </div>
           <div>
             <label className="block text-sm font-semibold mb-2">Select NFT</label>
+            {/* Always show NFT requirement message and mint link */}
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-white/80 text-sm">Choose an NFT to auction. Need one?</span>
+              <a
+                href="/mint/nft"
+                className="text-inco-blue font-semibold underline hover:text-inco-blue/80 transition-colors text-sm"
+              >
+                Mint NFT
+              </a>
+            </div>
+            {/* End NFT requirement message */}
             {!isConnected ? (
               <div className="text-white/60 text-sm">Connect your wallet to select an NFT.</div>
             ) : loadingNFTs ? (

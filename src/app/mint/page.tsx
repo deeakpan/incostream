@@ -17,10 +17,13 @@ export default function MintPage() {
           Incostream
         </span>
       </div>
+      <div className="w-full flex justify-center mb-2">
+        <span className="text-xs text-yellow-400 bg-yellow-900/40 px-3 py-1 rounded-full font-semibold">NOTE: only available on Base Sepolia (Testnet environment)</span>
+      </div>
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="max-w-md w-full mx-auto flex flex-col gap-8 items-center py-24">
           <p className="mb-4 text-base max-w-sm w-full text-center font-medium">
-            Unlock the full power of <span className="text-inco-blue font-extrabold">Incostream</span> on Base Sepolia, built with Inco: mint an NFT (ERC-721) to launch your own auction, or mint cUSDC to join exclusive, private bidding.
+            Mint an NFT to launch your auction, or get cUSDC for private bidding on Incostream.
           </p>
           <div className="flex flex-col gap-6 w-full bg-white/5 border border-white/10 rounded-2xl shadow-lg p-8 text-left">
             <Link href="/mint/nft" className="block w-full">
