@@ -11,9 +11,12 @@ import { parseAbi } from 'viem';
 import { useState as useReactState } from "react";
 
 const LIGHTHOUSE_API_KEY = process.env.NEXT_PUBLIC_LIGHTHOUSE_API_KEY;
-const CONTRACT_ADDRESS = '0x3FcEda45e08D131238428848b887b4894C05e146';
+const CONTRACT_ADDRESS = '0x2A016444A73bDb31b1fC66EC2D5e47030A0E4701';
 const CONTRACT_ABI = parseAbi([
-  'function mint(string tokenURI) public returns (uint256)'
+  'function mint(string tokenURI) public returns (uint256)',
+  'function tokenURI(uint256 tokenId) public view returns (string)',
+  'function balanceOf(address owner) public view returns (uint256)',
+  'function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256)'
 ]);
 
 // CloudIcon copied for branding consistency

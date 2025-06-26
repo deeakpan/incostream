@@ -41,20 +41,19 @@ export default function NFTAuctionPage() {
 
   // Fetch NFTs for connected wallet using Alchemy SDK
   useEffect(() => {
-    const fetchNFTs = async () => {
-      if (!isConnected || !address) return;
-      setLoadingNFTs(true);
-      setNftError('');
-      try {
-        const nftsList = await fetchNftsForOwner(address);
-        setNfts(nftsList);
-      } catch (err) {
-        setNftError('Failed to fetch NFTs.');
-      } finally {
-        setLoadingNFTs(false);
-      }
-    };
-    fetchNFTs();
+    console.log('NFT fetch effect running', { isConnected, address });
+    if (!isConnected || !address) return;
+    setLoadingNFTs(true);
+    setNftError('');
+    fetchNftsForOwner(address).then(nfts => {
+      console.log('NFTs fetched in component:', nfts);
+      setNfts(nfts);
+    }).catch(e => {
+      console.error('Error fetching NFTs:', e);
+      setNftError('Failed to fetch NFTs.');
+    }).finally(() => {
+      setLoadingNFTs(false);
+    });
   }, [isConnected, address]);
 
   const handleDisconnect = async () => {
@@ -86,20 +85,7 @@ export default function NFTAuctionPage() {
 
   // Fetch NFT metadata if missing when selected
   const handleSelectNFT = async (nft: any, idx: number) => {
-    // If metadata and image are present, just select
-    let img =
-      nft.media?.[0]?.gateway ||
-      nft.media?.[0]?.raw ||
-      nft.metadata?.image ||
-      nft.rawMetadata?.image ||
-      '';
-    let name = nft.title?.name || nft.metadata?.name || nft.rawMetadata?.name || `#${nft.tokenId}`;
-    if (img && name) {
-      setSelectedNFT(nft);
-      return;
-    }
-    // Otherwise, fetch metadata
-    setLoadingMetadataIdx(idx);
+    setLoadingMetadataIdx(idx); // Always set spinner immediately
     try {
       const apiKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
       const url = `https://base-sepolia.g.alchemy.com/nft/v3/${apiKey}/getNFTMetadata?contractAddress=${nft.contract?.address}&tokenId=${nft.tokenId}`;
@@ -258,8 +244,14 @@ export default function NFTAuctionPage() {
                     <div
                       key={`${nft.contract?.address?.toLowerCase()}:${nft.tokenId}:${idx}`}
                       className={`flex flex-col items-center border rounded-xl p-4 bg-white/10 transition-colors shadow-md cursor-pointer ${isSelected ? 'border-inco-blue ring-2 ring-inco-blue' : 'border-white/20 hover:border-inco-blue/60'}`}
-                      onClick={() => setSelectedNFT(nft)}
+                      onClick={() => handleSelectNFT(nft, idx)}
+                      style={{ position: 'relative', pointerEvents: loadingMetadataIdx === idx ? 'none' : 'auto' }}
                     >
+                      {loadingMetadataIdx === idx && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10 rounded-xl">
+                          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        </div>
+                      )}
                       {img ? (
                         <img
                           src={img}
