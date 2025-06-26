@@ -231,7 +231,8 @@ export default function NFTAuctionPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {nfts.map((nft, idx) => {
                   console.log('NFT:', nft); // DEBUG: log the full NFT object
-                  let img = nft.image?.cachedUrl || '';
+                  const meta = nft.metadata || {};
+                  let img = meta.image || '';
                   if (img) {
                     if (img.startsWith('ipfs://')) {
                       img = img.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
@@ -242,7 +243,7 @@ export default function NFTAuctionPage() {
                   const isSelected = selectedNFT?.tokenId === nft.tokenId;
                   return (
                     <div
-                      key={`${nft.contract?.address?.toLowerCase()}:${nft.tokenId}:${idx}`}
+                      key={`${nft.tokenId?.toString?.() || nft.tokenId}:${idx}`}
                       className={`flex flex-col items-center border rounded-xl p-4 bg-white/10 transition-colors shadow-md cursor-pointer ${isSelected ? 'border-inco-blue ring-2 ring-inco-blue' : 'border-white/20 hover:border-inco-blue/60'}`}
                       onClick={() => handleSelectNFT(nft, idx)}
                       style={{ position: 'relative', pointerEvents: loadingMetadataIdx === idx ? 'none' : 'auto' }}
@@ -255,7 +256,7 @@ export default function NFTAuctionPage() {
                       {img ? (
                         <img
                           src={img}
-                          alt={nft.name || 'NFT'}
+                          alt={meta.name || 'NFT'}
                           className="w-24 h-24 object-cover rounded-lg mb-3 border border-white/10 shadow"
                           onError={e => {
                             e.currentTarget.onerror = null;
@@ -267,8 +268,8 @@ export default function NFTAuctionPage() {
                           No Image
                         </div>
                       )}
-                      <div className="font-mono text-sm text-white font-bold mb-1 truncate w-full text-center">{nft.name || '—'}</div>
-                      <div className="text-xs text-white/70 text-center line-clamp-2 w-full">{nft.description || '—'}</div>
+                      <div className="font-mono text-sm text-white font-bold mb-1 truncate w-full text-center">{meta.name || '—'}</div>
+                      <div className="text-xs text-white/70 text-center line-clamp-2 w-full">{meta.description || '—'}</div>
                     </div>
                   );
                 })}

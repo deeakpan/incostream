@@ -1,8 +1,11 @@
 import { ethers } from "ethers";
 
-const CONTRACT_ADDRESS = '0x3FcEda45e08D131238428848b887b4894C05e146';
+const CONTRACT_ADDRESS = '0x2A016444A73bDb31b1fC66EC2D5e47030A0E4701';
 const CONTRACT_ABI = [
-  "function tokenURI(uint256 tokenId) public view returns (string)"
+  "function mint(string tokenURI) public returns (uint256)",
+  "function tokenURI(uint256 tokenId) public view returns (string)",
+  "function balanceOf(address owner) public view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256)"
 ];
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL);
@@ -41,49 +44,19 @@ async function fetchMetadata(tokenURI: string) {
 }
 
 export async function fetchNftsForOwner(address: string) {
-  // 1. Get all Transfer events
-  const filter = contract.filters.Transfer(null, null);
-  const events = await contract.queryFilter(filter, 0, "latest");
-
-  // 2. Reconstruct ownership
-  const ownership: Record<string, string> = {};
-  for (const event of events) {
-    const args = event.args;
-    if (!args) continue;
-    // ethers v5: args is an array, v6: args is an object
-    let to: string | undefined;
-    let tokenId: string | number | undefined;
-    if (Array.isArray(args)) {
-      // ethers v5: [from, to, tokenId]
-      to = args[1];
-      tokenId = args[2];
-    } else {
-      // ethers v6: {from, to, tokenId}
-      to = args.to;
-      tokenId = args.tokenId;
+  const balance = await contract.balanceOf(address);
+  const nfts = [];
+  for (let i = 0; i < balance; i++) {
+    let tokenId, tokenURI, metadata;
+    try {
+      tokenId = await contract.tokenOfOwnerByIndex(address, i);
+      tokenURI = await contract.tokenURI(tokenId);
+      metadata = await fetchMetadata(tokenURI);
+    } catch (e) {
+      // log error, just return what we have
+      console.warn(`Failed to fetch NFT at index ${i}:`, e);
     }
-    if (!to || tokenId === undefined) continue;
-    ownership[tokenId.toString()] = to.toLowerCase();
+    nfts.push({ tokenId, tokenURI, metadata });
   }
-  // 3. Get all tokenIds owned by address
-  const ownedTokenIds = Object.entries(ownership)
-    .filter(([_, owner]) => owner === address.toLowerCase())
-    .map(([tokenId]) => tokenId);
-
-  // 4. Fetch tokenURI and metadata for each
-  const nfts = await Promise.all(
-    ownedTokenIds.map(async (tokenId) => {
-      let tokenURI = '';
-      let metadata = null;
-      try {
-        tokenURI = await contract.tokenURI(tokenId);
-        metadata = await fetchMetadata(tokenURI);
-      } catch (e) {
-        // log error, just return what we have
-        console.warn(`Failed to fetch metadata for tokenId ${tokenId}:`, e);
-      }
-      return { tokenId, tokenURI, metadata };
-    })
-  );
   return nfts;
 } 
