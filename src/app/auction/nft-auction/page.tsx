@@ -34,6 +34,8 @@ export default function NFTAuctionPage() {
   const [loadingNFTs, setLoadingNFTs] = useState(false);
   const [nftError, setNftError] = useState('');
   const [loadingMetadataIdx, setLoadingMetadataIdx] = useState<number | null>(null);
+  const [auctionEndDate, setAuctionEndDate] = useState('');
+  const [auctionEndTime, setAuctionEndTime] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -191,6 +193,30 @@ export default function NFTAuctionPage() {
               required
               disabled={!isConnected}
             />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-semibold mb-2">Auction End Date</label>
+              <input
+                type="date"
+                value={auctionEndDate}
+                onChange={e => setAuctionEndDate(e.target.value)}
+                className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-inco-blue/40 rounded-full transition-all text-base font-mono"
+                required
+                disabled={!isConnected}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-semibold mb-2">Auction End Time</label>
+              <input
+                type="time"
+                value={auctionEndTime}
+                onChange={e => setAuctionEndTime(e.target.value)}
+                className="w-full p-3 bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-inco-blue/40 rounded-full transition-all text-base font-mono"
+                required
+                disabled={!isConnected}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-semibold mb-2">Minimum Bid (cUSDC)</label>
