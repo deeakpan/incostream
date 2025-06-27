@@ -9,6 +9,7 @@ import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import { fetchAllAuctions, Auction } from "@/utils/fetchAuctions";
 import { ethers } from "ethers";
+import BidModal from "@/components/BidModal";
 
 const AUCTION_TABS = [
   { label: 'Active', value: 'active' },
@@ -131,6 +132,8 @@ export default function Home() {
   const [modalAuction, setModalAuction] = useState<any>(null);
   const [modalNftMeta, setModalNftMeta] = useState<any>(null);
   const [modalAuctionMeta, setModalAuctionMeta] = useState<any>(null);
+  const [bidModalAuction, setBidModalAuction] = useState<any>(null);
+  const [bidModalMeta, setBidModalMeta] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -198,19 +201,19 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile search bar, toggled by icon in header */}
-        {showSearch && (
+      {showSearch && (
           <div className="sm:hidden px-4 pb-2">
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
               placeholder="Search auctions..."
               className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white placeholder-white/40 text-sm outline-none"
               ref={searchInputRef}
-              autoFocus
-            />
-          </div>
-        )}
+            autoFocus
+          />
+        </div>
+      )}
         {/* Tabs, Search, and Wallet Button (responsive) */}
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 px-2 sm:px-6 pt-4 sm:pt-8 pb-2 sm:pb-4">
           <div className="flex gap-1 w-full sm:w-auto">
@@ -264,7 +267,7 @@ export default function Home() {
               Connect Wallet
             </button>
           )}
-        </div>
+            </div>
 
         {/* Active/Ended Auctions */}
         <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 pb-8">
@@ -286,7 +289,7 @@ export default function Home() {
                       {nftMeta.image && (
                         <img src={nftMeta.image} alt={nftMeta.name || 'NFT image'} className="w-full h-full object-cover" />
                       )}
-                    </div>
+          </div>
                     {/* All text info below image */}
                     <div className="flex flex-col gap-2 p-5">
                       {/* Auction Name and Description (primary) */}
@@ -307,9 +310,17 @@ export default function Home() {
                       {isEnded ? (
                         <div className="mt-3 px-4 py-1 bg-gray-700 rounded text-gray-300 text-base font-semibold text-center select-none cursor-default">Ended</div>
                       ) : (
-                        <button className="mt-3 px-5 py-2 bg-inco-blue rounded text-white font-medium hover:bg-inco-blue/90 transition-colors text-base">Bid</button>
+                        <button
+                          className="mt-3 px-5 py-2 bg-inco-blue rounded text-white font-medium hover:bg-inco-blue/90 transition-colors text-base"
+                          onClick={() => {
+                            setBidModalAuction(auction);
+                            setBidModalMeta(auctionMeta);
+                          }}
+                        >
+                          Bid
+                        </button>
                       )}
-                    </div>
+                  </div>
                   </div>
                 );
               })}
@@ -327,12 +338,12 @@ export default function Home() {
                 {modalAuctionMeta?.description && (
                   <div className="text-xs text-white/60 mt-0.5" title={modalAuctionMeta.description}>{modalAuctionMeta.description}</div>
                 )}
-              </div>
+                  </div>
               {/* NFT Name/Description (secondary) */}
               <div className="mb-2">
                 {modalNftMeta?.name && <div className="text-xs text-white/40 truncate" title={modalNftMeta.name}>{modalNftMeta.name}</div>}
                 {modalNftMeta?.description && <div className="text-xs text-white/30 truncate" title={modalNftMeta.description}>{modalNftMeta.description}</div>}
-              </div>
+                </div>
               {/* NFT Image - full, object-contain */}
               {modalNftMeta?.image && (
                 <img src={modalNftMeta.image} alt={modalNftMeta.name || 'NFT image'} className="w-full max-h-36 object-contain rounded mb-3 bg-white/5" />
@@ -363,6 +374,14 @@ export default function Home() {
             </div>
           </div>
         )}
+        {/* BidModal integration */}
+        {bidModalAuction && (
+          <BidModal
+            minBid={bidModalAuction.minBid}
+            auctionId={bidModalAuction.auctionId}
+            onClose={() => { setBidModalAuction(null); setBidModalMeta(null); }}
+          />
+        )}
       </div>
     </div>
   );
@@ -374,7 +393,7 @@ function WalletIcon({ className = "" }: { className?: string }) {
       <rect x="2.5" y="5" width="15" height="10" rx="3" fill="currentColor" className="text-inco-blue/30" />
       <rect x="2.5" y="5" width="15" height="10" rx="3" stroke="currentColor" />
       <circle cx="15" cy="10" r="1" fill="currentColor" />
-    </svg>
-  );
+  </svg>
+);
 }
 
