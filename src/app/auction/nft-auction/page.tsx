@@ -50,6 +50,7 @@ export default function NFTAuctionPage() {
   const [auctionEndTime, setAuctionEndTime] = useState('');
   const [txHash, setTxHash] = useState<string | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -176,6 +177,7 @@ export default function NFTAuctionPage() {
     e.preventDefault();
     setTxHash(null);
     setTxError(null);
+    setIsSubmitting(true);
     if (!walletClient || !selectedNFT || !auctionEndDate || !auctionEndTime) return;
     
     // Debug logging
@@ -291,6 +293,8 @@ export default function NFTAuctionPage() {
     } catch (err: any) {
       console.error('Auction creation error:', err);
       setTxError(err?.reason || err?.message || 'Transaction failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -452,10 +456,17 @@ export default function NFTAuctionPage() {
           </div>
           <button
             type="submit"
-            className="w-full py-3 bg-gradient-to-r from-inco-blue/90 to-inco-blue rounded-full text-white font-bold text-base shadow-lg hover:from-inco-blue hover:to-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-mono mt-2"
-            disabled={!isConnected || !selectedNFT}
+            className="w-full py-3 bg-gradient-to-r from-inco-blue/90 to-inco-blue rounded-full text-white font-bold text-base shadow-lg hover:from-inco-blue hover:to-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed font-mono mt-2 flex items-center justify-center gap-2"
+            disabled={!isConnected || !selectedNFT || isSubmitting}
           >
-            Create Auction
+            {isSubmitting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Creating Auction...
+              </>
+            ) : (
+              'Create Auction'
+            )}
           </button>
         </form>
         {txHash && (
