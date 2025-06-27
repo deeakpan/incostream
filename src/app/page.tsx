@@ -8,6 +8,7 @@ import { ConfirmModal } from "@/components/encrypted-token-dashboard";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
 import { fetchAllAuctions, Auction } from "@/utils/fetchAuctions";
+import { ethers } from "ethers";
 
 const AUCTION_TABS = [
   { label: 'Active', value: 'active' },
@@ -46,6 +47,43 @@ function HamburgerIcon({ className = "" }: { className?: string }) {
   );
 }
 
+function formatCUSDC(value: string): string {
+  return (Number(value) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+// Robust NFT metadata fetcher (from fetchNfts.ts)
+async function fetchNftMetadata(nftAddress: string, tokenId: string, provider: ethers.providers.JsonRpcProvider) {
+  const CONTRACT_ABI = [
+    "function tokenURI(uint256 tokenId) public view returns (string)"
+  ];
+  const contract = new ethers.Contract(nftAddress, CONTRACT_ABI, provider);
+  let tokenURI = await contract.tokenURI(tokenId);
+  let url = tokenURI;
+  if (url.startsWith('ipfs://')) {
+    url = url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+  }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.statusText);
+    return await res.json();
+  } catch (e) {
+    if (tokenURI.startsWith('ipfs://')) {
+      const cid = tokenURI.replace('ipfs://', '');
+      for (const gw of [
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://gateway.lighthouse.storage/ipfs/${cid}`
+      ]) {
+        try {
+          const res = await fetch(gw);
+          if (!res.ok) throw new Error(res.statusText);
+          return await res.json();
+        } catch {}
+      }
+    }
+    return null;
+  }
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('active');
   const [search, setSearch] = useState('');
@@ -59,11 +97,21 @@ export default function Home() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loadingAuctions, setLoadingAuctions] = useState(true);
+  const [nftMetadataCache, setNftMetadataCache] = useState<{ [key: string]: any }>({});
 
   useEffect(() => {
     setMounted(true);
-    // Fetch all auctions from blockchain
-    fetchAllAuctions().then((data) => {
+    const provider = new ethers.providers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL);
+    fetchAllAuctions().then(async (data) => {
+      // Fetch NFT metadata for each auction
+      const cache: { [key: string]: any } = {};
+      await Promise.all(data.map(async (auction) => {
+        const cacheKey = `${auction.nftAddress}-${auction.tokenId}`;
+        if (!cache[cacheKey]) {
+          cache[cacheKey] = await fetchNftMetadata(auction.nftAddress, auction.tokenId, provider);
+        }
+      }));
+      setNftMetadataCache(cache);
       setAuctions(data);
       setLoadingAuctions(false);
     });
@@ -188,17 +236,32 @@ export default function Home() {
             <div className="text-white/60 py-8">No auctions found.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {filteredAuctions.map((auction) => (
-                <div key={auction.auctionId} className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
-                  <div className="text-xs text-white/40">Auction #{auction.auctionId}</div>
-                  <div className="font-bold text-lg">NFT: {auction.nftAddress} #{auction.tokenId}</div>
-                  <div>Min Bid: <span className="font-mono">{auction.minBid}</span> cUSDC</div>
-                  <div>Ends: {new Date(Number(auction.endTime) * 1000).toLocaleString()}</div>
-                  <div className="text-xs text-white/40">Seller: {auction.seller}</div>
-                  {/* Optionally, show image if you fetch it from metadataURI */}
-                  <button className="mt-2 px-4 py-2 bg-inco-blue rounded text-white font-semibold hover:bg-inco-blue/90 transition-colors">Bid</button>
-                </div>
-              ))}
+              {filteredAuctions.map((auction) => {
+                const cacheKey = `${auction.nftAddress}-${auction.tokenId}`;
+                const nftMeta = nftMetadataCache[cacheKey] || {};
+                const isEnded = activeTab === 'ended';
+                return (
+                  <div key={auction.auctionId} className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
+                    <div className="text-xs text-white/40">Auction #{auction.auctionId}</div>
+                    {/* Auction metadata (if any) could go here */}
+                    {/* NFT Name */}
+                    <div className="font-bold text-lg">{nftMeta.name ? nftMeta.name : `NFT: ${auction.nftAddress} #${auction.tokenId}`}</div>
+                    {/* NFT Description */}
+                    {nftMeta.description && (
+                      <div className="text-sm text-white/70 mb-1">{nftMeta.description}</div>
+                    )}
+                    {/* NFT Image */}
+                    {nftMeta.image && (
+                      <img src={nftMeta.image} alt={nftMeta.name || "NFT image"} className="w-full h-40 object-cover rounded mb-2" />
+                    )}
+                    {/* NFT Data */}
+                    <div>Min Bid: <span className="font-mono">{formatCUSDC(auction.minBid)}</span> cUSDC</div>
+                    <div>{isEnded ? "Ended:" : "Ends:"} {new Date(Number(auction.endTime) * 1000).toLocaleString()}</div>
+                    <div className="text-xs text-white/40">Seller: {auction.seller}</div>
+                    <button className="mt-2 px-4 py-2 bg-inco-blue rounded text-white font-semibold hover:bg-inco-blue/90 transition-colors">Bid</button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

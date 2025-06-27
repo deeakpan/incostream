@@ -33,4 +33,19 @@ export async function fetchAllAuctions(): Promise<Auction[]> {
     });
   }
   return auctions;
+}
+
+export async function fetchMetadata(uri: string) {
+  if (!uri) return null;
+  let url = uri;
+  if (uri.startsWith("ipfs://")) {
+    url = `https://gateway.lighthouse.storage/ipfs/${uri.replace("ipfs://", "")}`;
+  }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 } 
