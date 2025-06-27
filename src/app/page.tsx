@@ -84,6 +84,35 @@ async function fetchNftMetadata(nftAddress: string, tokenId: string, provider: e
   }
 }
 
+// Helper to get auction metadata (name/description) from auction.metadataURI
+async function fetchAuctionMeta(uri: string) {
+  if (!uri) return null;
+  let url = uri;
+  if (uri.startsWith('ipfs://')) {
+    url = url.replace('ipfs://', 'https://cloudflare-ipfs.com/ipfs/');
+  }
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.statusText);
+    return await res.json();
+  } catch (e) {
+    if (uri.startsWith('ipfs://')) {
+      const cid = uri.replace('ipfs://', '');
+      for (const gw of [
+        `https://ipfs.io/ipfs/${cid}`,
+        `https://gateway.lighthouse.storage/ipfs/${cid}`
+      ]) {
+        try {
+          const res = await fetch(gw);
+          if (!res.ok) throw new Error(res.statusText);
+          return await res.json();
+        } catch {}
+      }
+    }
+    return null;
+  }
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState('active');
   const [search, setSearch] = useState('');
@@ -98,20 +127,29 @@ export default function Home() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loadingAuctions, setLoadingAuctions] = useState(true);
   const [nftMetadataCache, setNftMetadataCache] = useState<{ [key: string]: any }>({});
+  const [auctionMetaCache, setAuctionMetaCache] = useState<{ [key: string]: any }>({});
+  const [modalAuction, setModalAuction] = useState<any>(null);
+  const [modalNftMeta, setModalNftMeta] = useState<any>(null);
+  const [modalAuctionMeta, setModalAuctionMeta] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
     const provider = new ethers.providers.JsonRpcProvider(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL);
     fetchAllAuctions().then(async (data) => {
       // Fetch NFT metadata for each auction
-      const cache: { [key: string]: any } = {};
+      const nftCache: { [key: string]: any } = {};
+      const auctionMeta: { [key: string]: any } = {};
       await Promise.all(data.map(async (auction) => {
         const cacheKey = `${auction.nftAddress}-${auction.tokenId}`;
-        if (!cache[cacheKey]) {
-          cache[cacheKey] = await fetchNftMetadata(auction.nftAddress, auction.tokenId, provider);
+        if (!nftCache[cacheKey]) {
+          nftCache[cacheKey] = await fetchNftMetadata(auction.nftAddress, auction.tokenId, provider);
+        }
+        if (auction.metadataURI && !auctionMeta[auction.metadataURI]) {
+          auctionMeta[auction.metadataURI] = await fetchAuctionMeta(auction.metadataURI);
         }
       }));
-      setNftMetadataCache(cache);
+      setNftMetadataCache(nftCache);
+      setAuctionMetaCache(auctionMeta);
       setAuctions(data);
       setLoadingAuctions(false);
     });
@@ -235,36 +273,96 @@ export default function Home() {
           ) : filteredAuctions.length === 0 ? (
             <div className="text-white/60 py-8">No auctions found.</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
               {filteredAuctions.map((auction) => {
                 const cacheKey = `${auction.nftAddress}-${auction.tokenId}`;
                 const nftMeta = nftMetadataCache[cacheKey] || {};
+                const auctionMeta = auctionMetaCache[auction.metadataURI] || {};
                 const isEnded = activeTab === 'ended';
                 return (
-                  <div key={auction.auctionId} className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
-                    <div className="text-xs text-white/40">Auction #{auction.auctionId}</div>
-                    {/* Auction metadata (if any) could go here */}
-                    {/* NFT Name */}
-                    <div className="font-bold text-lg">{nftMeta.name ? nftMeta.name : `NFT: ${auction.nftAddress} #${auction.tokenId}`}</div>
-                    {/* NFT Description */}
-                    {nftMeta.description && (
-                      <div className="text-sm text-white/70 mb-1">{nftMeta.description}</div>
-                    )}
-                    {/* NFT Image */}
-                    {nftMeta.image && (
-                      <img src={nftMeta.image} alt={nftMeta.name || "NFT image"} className="w-full h-40 object-cover rounded mb-2" />
-                    )}
-                    {/* NFT Data */}
-                    <div>Min Bid: <span className="font-mono">{formatCUSDC(auction.minBid)}</span> cUSDC</div>
-                    <div>{isEnded ? "Ended:" : "Ends:"} {new Date(Number(auction.endTime) * 1000).toLocaleString()}</div>
-                    <div className="text-xs text-white/40">Seller: {auction.seller}</div>
-                    <button className="mt-2 px-4 py-2 bg-inco-blue rounded text-white font-semibold hover:bg-inco-blue/90 transition-colors">Bid</button>
+                  <div key={auction.auctionId} className="bg-white/5 border border-white/10 rounded-lg p-0 flex flex-col shadow-sm hover:shadow-md transition-shadow min-h-[260px] min-w-[270px] max-w-md mx-auto overflow-hidden">
+                    {/* NFT Image - full, object-cover, clickable, at the top */}
+                    <div className="w-full aspect-[4/3] bg-white/10 flex items-center justify-center overflow-hidden cursor-pointer max-h-40" onClick={() => { setModalAuction(auction); setModalNftMeta(nftMeta); setModalAuctionMeta(auctionMeta); }}>
+                      {nftMeta.image && (
+                        <img src={nftMeta.image} alt={nftMeta.name || 'NFT image'} className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    {/* All text info below image */}
+                    <div className="flex flex-col gap-2 p-5">
+                      {/* Auction Name and Description (primary) */}
+                      <div>
+                        <div className="text-base font-semibold text-white truncate" title={auctionMeta.name}>{auctionMeta.name || `Auction #${auction.auctionId}`}</div>
+                        {auctionMeta.description && (
+                          <div className="text-sm text-white/60 mt-0.5 line-clamp-2" title={auctionMeta.description}>{auctionMeta.description}</div>
+                        )}
+                      </div>
+                      {/* Min Bid - label, value, cUSDC */}
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-sm font-sans text-white/60">Min Bid:</span>
+                        <span className="text-lg font-bold text-white">{formatCUSDC(auction.minBid)} cUSDC</span>
+                      </div>
+                      {/* Ends/Ended */}
+                      <div className="text-sm font-sans text-white/50 mt-1">{isEnded ? 'Ended:' : 'Ends:'} {new Date(Number(auction.endTime) * 1000).toLocaleString()}</div>
+                      {/* Bid button or Ended badge */}
+                      {isEnded ? (
+                        <div className="mt-3 px-4 py-1 bg-gray-700 rounded text-gray-300 text-base font-semibold text-center select-none cursor-default">Ended</div>
+                      ) : (
+                        <button className="mt-3 px-5 py-2 bg-inco-blue rounded text-white font-medium hover:bg-inco-blue/90 transition-colors text-base">Bid</button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
         </div>
+        {/* Modal for NFT details */}
+        {modalAuction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={e => { if (e.target === e.currentTarget) { setModalAuction(null); setModalNftMeta(null); setModalAuctionMeta(null); } }}>
+            <div className="bg-inco-navy rounded-lg p-3 max-w-xs w-full relative shadow-xl border border-inco-blue" style={{ minWidth: 0 }}>
+              <button className="absolute top-2 right-3 text-white/60 hover:text-white text-2xl font-bold" onClick={() => { setModalAuction(null); setModalNftMeta(null); setModalAuctionMeta(null); }}>&times;</button>
+              {/* Auction Name/Description */}
+              <div className="mb-2">
+                <div className="text-lg font-semibold text-white truncate" title={modalAuctionMeta?.name}>{modalAuctionMeta?.name || `Auction #${modalAuction?.auctionId}`}</div>
+                {modalAuctionMeta?.description && (
+                  <div className="text-xs text-white/60 mt-0.5" title={modalAuctionMeta.description}>{modalAuctionMeta.description}</div>
+                )}
+              </div>
+              {/* NFT Name/Description (secondary) */}
+              <div className="mb-2">
+                {modalNftMeta?.name && <div className="text-xs text-white/40 truncate" title={modalNftMeta.name}>{modalNftMeta.name}</div>}
+                {modalNftMeta?.description && <div className="text-xs text-white/30 truncate" title={modalNftMeta.description}>{modalNftMeta.description}</div>}
+              </div>
+              {/* NFT Image - full, object-contain */}
+              {modalNftMeta?.image && (
+                <img src={modalNftMeta.image} alt={modalNftMeta.name || 'NFT image'} className="w-full max-h-36 object-contain rounded mb-3 bg-white/5" />
+              )}
+              <div className="mb-2">
+                <span className="text-xs font-sans text-white/60">NFT Contract:</span> 
+                <a 
+                  href={`https://sepolia.basescan.org/address/${modalAuction.nftAddress}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="underline font-sans text-inco-blue hover:text-inco-blue/80 inline-block align-middle max-w-full truncate" 
+                  style={{ maxWidth: '180px', verticalAlign: 'middle', wordBreak: 'break-all' }}
+                  title={modalAuction.nftAddress}
+                >
+                  {modalAuction.nftAddress.slice(0, 8)}...{modalAuction.nftAddress.slice(-6)}
+                </a>
+              </div>
+              <div className="mb-2">
+                <span className="text-xs font-sans text-white/60">Token ID:</span> <span className="font-sans text-white">{modalAuction.tokenId}</span>
+              </div>
+              <div className="mb-2">
+                <span className="text-xs font-sans text-white/60">Min Bid:</span> <span className="font-sans font-normal text-white text-base">{formatCUSDC(modalAuction.minBid)} cUSDC</span>
+              </div>
+              <div className="mb-2">
+                <span className="text-xs font-sans text-white/60">{Number(modalAuction.endTime) * 1000 < Date.now() ? 'Ended:' : 'Ends:'}</span> <span className="font-sans text-white">{new Date(Number(modalAuction.endTime) * 1000).toLocaleString()}</span>
+              </div>
+              <button className="mt-4 w-full px-4 py-2 bg-inco-blue rounded text-white font-medium hover:bg-inco-blue/90 transition-colors shadow">Bid</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
