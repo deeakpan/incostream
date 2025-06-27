@@ -1,7 +1,7 @@
 export const ENCRYPTED_ERC20_CONTRACT_ADDRESS =
   "0xA449bc031fA0b815cA14fAFD0c5EdB75ccD9c80f";
 
-export const CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS = "0x1146C9B695BedcDaC18c483F30f3453B30C4fC4B";
+export const CONFIDENTIAL_AUCTION_CONTRACT_ADDRESS = "0x61a628C133d4C296404126d0B9c48C7D46969897";
 
 export const CONFIDENTIAL_AUCTION_ABI = [
   "function createAuction(address nftAddress, uint256 tokenId, uint256 endTime, string metadataURI, uint256 minBid) external returns (uint256)",

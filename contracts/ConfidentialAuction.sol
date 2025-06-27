@@ -31,6 +31,9 @@ contract ConfidentialAuction is IERC721Receiver {
     // Track NFTs that are in escrow but not in active auctions
     mapping(address => mapping(uint256 => address)) public nftEscrow; // nftContract => tokenId => owner
 
+    // Track claimable refunds for bidders
+    mapping(address => bytes) public claimableRefunds;
+
     event AuctionCreated(uint256 indexed auctionId, address indexed seller, address nft, uint256 tokenId, uint256 endTime, string metadataURI, uint256 minBid);
     event BidPlaced(uint256 indexed auctionId, address indexed bidder, bytes encryptedBid);
     event AuctionSettled(uint256 indexed auctionId, address winner);
@@ -97,6 +100,11 @@ contract ConfidentialAuction is IERC721Receiver {
         // FHE comparison: require(FHE.gt(encryptedBid, auction.highestBid), "Bid not high enough");
         // FHE comparison: require(FHE.gte(encryptedBid, auction.minBid), "Bid below minimum");
         
+        // If there is a previous highest bidder, store their bid as claimable for refund
+        if (auction.highestBidder != address(0)) {
+            claimableRefunds[auction.highestBidder] = auction.highestBid;
+        }
+
         cUSDC.transferFrom(msg.sender, address(this), encryptedBid);
         auction.highestBidder = msg.sender;
         auction.highestBid = encryptedBid;
@@ -111,5 +119,13 @@ contract ConfidentialAuction is IERC721Receiver {
         IERC721(auction.nftAddress).safeTransferFrom(address(this), auction.highestBidder, auction.tokenId);
         cUSDC.transferFrom(address(this), auction.seller, auction.highestBid);
         emit AuctionSettled(auctionId, auction.highestBidder);
+    }
+
+    // Allow losing bidders to claim their refund
+    function claimRefund() external {
+        bytes memory refund = claimableRefunds[msg.sender];
+        require(refund.length > 0, "No refund available");
+        claimableRefunds[msg.sender] = ""; // Prevent re-entrancy
+        cUSDC.transferFrom(address(this), msg.sender, refund);
     }
 } 
