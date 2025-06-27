@@ -12,5 +12,7 @@ export const CONFIDENTIAL_AUCTION_ABI = [
   "event AuctionCreated(uint256 indexed auctionId, address indexed seller, address nft, uint256 tokenId, uint256 endTime, string metadataURI, uint256 minBid)",
   "event BidPlaced(uint256 indexed auctionId, address indexed bidder, bytes encryptedBid)",
   "event AuctionSettled(uint256 indexed auctionId, address winner)",
-  "event NFTRecovered(address indexed owner, address nftContract, uint256 tokenId)"
+  "event NFTRecovered(address indexed owner, address nftContract, uint256 tokenId)",
+  "function auctionCount() view returns (uint256)",
+  "function auctions(uint256) view returns (address seller, address nftAddress, uint256 tokenId, uint256 endTime, string metadataURI, uint256 minBid, address highestBidder, bytes highestBid, bool settled)"
 ];

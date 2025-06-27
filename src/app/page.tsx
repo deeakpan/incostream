@@ -7,6 +7,7 @@ import EncryptedTokenDashboard from "@/components/encrypted-token-dashboard";
 import { ConfirmModal } from "@/components/encrypted-token-dashboard";
 import Link from "next/link";
 import Sidebar from "@/components/sidebar";
+import { fetchAllAuctions, Auction } from "@/utils/fetchAuctions";
 
 const AUCTION_TABS = [
   { label: 'Active', value: 'active' },
@@ -56,42 +57,17 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [loadingAuctions, setLoadingAuctions] = useState(true);
 
   useEffect(() => {
     setMounted(true);
+    // Fetch all auctions from blockchain
+    fetchAllAuctions().then((data) => {
+      setAuctions(data);
+      setLoadingAuctions(false);
+    });
   }, []);
-
-  // Mock data for recent auctions
-  const recentAuctions = [
-    {
-      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-      title: 'Vintage NFT Collectible',
-      currentBid: '1.2 ETH',
-      timeLeft: '1h 45m',
-      status: 'active',
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
-      title: 'Exclusive Music Track',
-      currentBid: '0.8 ETH',
-      timeLeft: '2h 10m',
-      status: 'ended',
-    },
-    {
-      image: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
-      title: 'Digital Sculpture',
-      currentBid: '3.1 ETH',
-      timeLeft: '4h 5m',
-      status: 'active',
-    },
-  ];
-
-  // Filter auctions by tab and search
-  const filteredAuctions = recentAuctions.filter(
-    (auction) =>
-      auction.status === activeTab &&
-      auction.title.toLowerCase().includes(search.toLowerCase())
-  );
 
   const handleDisconnect = async () => {
     try {
@@ -114,6 +90,13 @@ export default function Home() {
     }
   };
 
+  const now = Math.floor(Date.now() / 1000);
+  const filteredAuctions = auctions.filter(a =>
+    activeTab === 'active'
+      ? !a.settled && Number(a.endTime) > now
+      : a.settled || Number(a.endTime) <= now
+  );
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-inco-navy flex items-center justify-center">
@@ -129,19 +112,19 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Mobile search bar, toggled by icon in header */}
-      {showSearch && (
+        {showSearch && (
           <div className="sm:hidden px-4 pb-2">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
               placeholder="Search auctions..."
               className="w-full bg-transparent border border-white/10 rounded px-3 py-2 text-white placeholder-white/40 text-sm outline-none"
               ref={searchInputRef}
-            autoFocus
-          />
-        </div>
-      )}
+              autoFocus
+            />
+          </div>
+        )}
         {/* Tabs, Search, and Wallet Button (responsive) */}
         <div className="w-full max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2 px-2 sm:px-6 pt-4 sm:pt-8 pb-2 sm:pb-4">
           <div className="flex gap-1 w-full sm:w-auto">
@@ -195,42 +178,30 @@ export default function Home() {
               Connect Wallet
             </button>
           )}
-            </div>
+        </div>
 
         {/* Active/Ended Auctions */}
-        <section className="max-w-7xl mx-auto px-2 sm:px-4 pb-20">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-inco-blue">{activeTab === 'active' ? 'Active Auctions' : 'Ended Auctions'}</h3>
-            <span className="text-xs text-white/40">{filteredAuctions.length} found</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-            {filteredAuctions.length === 0 ? (
-              <div className="col-span-full text-center text-white/50 py-12">No auctions found.</div>
-            ) : (
-              filteredAuctions.map((auction, idx) => (
-                <div key={idx} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-md flex flex-col">
-                  <img src={auction.image} alt={auction.title} className="w-full h-36 object-cover" />
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <h4 className="text-base font-semibold mb-1">{auction.title}</h4>
-                    <div className="flex items-center justify-between mt-2">
-                      <div>
-                        <span className="text-xs text-white/50">Current Bid</span>
-                        <div className="text-sm font-medium">{auction.currentBid}</div>
-                      </div>
-                      <div>
-                        <span className="text-xs text-white/50">Time Left</span>
-                        <div className="text-xs">{auction.timeLeft}</div>
-                  </div>
-                  </div>
-                    <button className="mt-3 px-3 py-1.5 bg-inco-blue text-white rounded-md font-semibold hover:bg-inco-blue/90 transition-colors text-xs">
-                      Place Bid
-                  </button>
-                  </div>
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-6 pb-8">
+          {loadingAuctions ? (
+            <div className="text-white/60 py-8">Loading auctions...</div>
+          ) : filteredAuctions.length === 0 ? (
+            <div className="text-white/60 py-8">No auctions found.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {filteredAuctions.map((auction) => (
+                <div key={auction.auctionId} className="bg-white/5 rounded-lg p-4 flex flex-col gap-2">
+                  <div className="text-xs text-white/40">Auction #{auction.auctionId}</div>
+                  <div className="font-bold text-lg">NFT: {auction.nftAddress} #{auction.tokenId}</div>
+                  <div>Min Bid: <span className="font-mono">{auction.minBid}</span> cUSDC</div>
+                  <div>Ends: {new Date(Number(auction.endTime) * 1000).toLocaleString()}</div>
+                  <div className="text-xs text-white/40">Seller: {auction.seller}</div>
+                  {/* Optionally, show image if you fetch it from metadataURI */}
+                  <button className="mt-2 px-4 py-2 bg-inco-blue rounded text-white font-semibold hover:bg-inco-blue/90 transition-colors">Bid</button>
                 </div>
-              ))
-            )}
-          </div>
-        </section>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -242,7 +213,7 @@ function WalletIcon({ className = "" }: { className?: string }) {
       <rect x="2.5" y="5" width="15" height="10" rx="3" fill="currentColor" className="text-inco-blue/30" />
       <rect x="2.5" y="5" width="15" height="10" rx="3" stroke="currentColor" />
       <circle cx="15" cy="10" r="1" fill="currentColor" />
-  </svg>
-);
+    </svg>
+  );
 }
 
